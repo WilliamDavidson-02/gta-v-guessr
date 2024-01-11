@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useEffect, useState } from "react";
+import { ReactNode, createContext, useEffect, useRef, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import supabase from "@/supabase/supabaseConfig";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ type UserContext = {
   signInWithPassword: (credentials: SignInCredentials) => Promise<void>;
   signUp: (credentials: SignUpCredentials) => Promise<void>;
   signOut: () => Promise<void>;
+  isLoading: boolean;
 };
 
 export const UserContext = createContext<UserContext | null>(null);
@@ -29,14 +30,32 @@ export default function UserContextProvider({
   children: ReactNode;
 }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const isGettingUser = useRef(false);
   const navigate = useNavigate();
 
   const getUser = async () => {
+    if (isGettingUser.current) return;
+    isGettingUser.current = true;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      isGettingUser.current = false;
+      setIsLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase.auth.getUser();
 
-    if (error) return;
-    console.log({ data, error });
+    if (error) {
+      isGettingUser.current = false;
+      setIsLoading(false);
+      return;
+    }
     setUser(data.user);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -57,12 +76,12 @@ export default function UserContextProvider({
       email,
       password,
       options: {
-        emailRedirectTo: "http://localhost:5173/",
-        data: { username, theme: "dark", access_role: "admin" },
+        data: { username, theme: "dark", access_role: "guessr" },
       },
     });
     if (error) return;
     setUser(data.user);
+    navigate("/");
   };
 
   const signOut = async () => {
@@ -71,7 +90,15 @@ export default function UserContextProvider({
   };
 
   return (
-    <UserContext.Provider value={{ user, signInWithPassword, signUp, signOut }}>
+    <UserContext.Provider
+      value={{
+        user,
+        signInWithPassword,
+        signUp,
+        signOut,
+        isLoading,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

@@ -2,6 +2,8 @@ import { lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PrivateRoutes, AdminRoute } from "./lib/PrivateRoutes";
 import UserContextProvider from "./context/UserContext";
+import AdminStats from "./pages/AdminStats";
+import MapBuilder from "./pages/MapBuilder";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -20,7 +22,10 @@ export default function App() {
             <Route path="/guessr" element={<Guessr />} />
           </Route>
           <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={<Admin />}>
+              <Route index element={<AdminStats />} />
+              <Route path="build" element={<MapBuilder />} />
+            </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
