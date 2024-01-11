@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PrivateRoutes, AdminRoute } from "./lib/PrivateRoutes";
-import UserContextProvider from "./context/ThemeContext";
+import UserContextProvider from "./context/UserContext";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -11,8 +11,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 export default function App() {
   return (
-    <UserContextProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <UserContextProvider>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth/:form" element={<Auth />} />
@@ -24,7 +24,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </UserContextProvider>
+      </UserContextProvider>
+    </BrowserRouter>
   );
 }
