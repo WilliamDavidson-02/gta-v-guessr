@@ -9,7 +9,8 @@ type Credentials = {
 
 type UserContext = {
   user: User | null;
-  signInWithEmail: (credentials: Credentials) => Promise<void>;
+  signInWithPassword: (credentials: Credentials) => Promise<void>;
+  signUp: (credentials: Credentials) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -22,11 +23,16 @@ export default function UserContextProvider({
 }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const signInWithEmail = async (credentials: Credentials) => {
-    console.log(credentials);
-    // const { data, error } = await supabase.auth.signInWithPassword(credentials);
-    // console.log({ data, error });
-    // setUser(data.user);
+  const signInWithPassword = async (credentials: Credentials) => {
+    const { data, error } = await supabase.auth.signInWithPassword(credentials);
+    console.log({ data, error });
+    setUser(data.user);
+  };
+
+  const signUp = async (credentials: Credentials) => {
+    const { data, error } = await supabase.auth.signUp(credentials);
+    console.log({ data, error });
+    setUser(data.user);
   };
 
   const signOut = async () => {
@@ -35,17 +41,17 @@ export default function UserContextProvider({
   };
 
   return (
-    <UserContext.Provider value={{ user, signInWithEmail, signOut }}>
+    <UserContext.Provider value={{ user, signInWithPassword, signUp, signOut }}>
       {children}
     </UserContext.Provider>
   );
 }
 
-export function useUserContext() {
+export const useUserContext = () => {
   const context = useContext(UserContext);
   if (!context) {
     throw new Error("useUserContext must be used within a UserContextProvider");
   }
 
   return context;
-}
+};

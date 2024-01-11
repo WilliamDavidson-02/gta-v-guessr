@@ -1,10 +1,10 @@
 import { lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PrivateRoutes, AdminRoute } from "./lib/PrivateRoutes";
-import UserContextProvider from "./context/themeContext";
+import UserContextProvider from "./context/ThemeContext";
 
 const Home = lazy(() => import("./pages/Home"));
-const Login = lazy(() => import("./pages/Login"));
+const Auth = lazy(() => import("./pages/Auth"));
 const Guessr = lazy(() => import("./pages/Guessr"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -15,7 +15,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/auth/:form" element={<Auth />} />
           <Route element={<PrivateRoutes />}>
             <Route path="/guessr" element={<Guessr />} />
           </Route>

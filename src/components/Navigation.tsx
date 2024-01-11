@@ -6,7 +6,7 @@ export default function Navigation() {
     <nav className="flex w-full justify-between py-6">
       <img src="/gta_v_icon.svg" alt="Gta v logo" />
       <Button>
-        <Link to="/login" reloadDocument>
+        <Link to="/auth/login" reloadDocument>
           Login in
         </Link>
       </Button>
