@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import useUserContext from "@/hooks/useUserContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowBigLeft } from "lucide-react";
-import { FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import * as z from "zod";

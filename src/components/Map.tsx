@@ -1,7 +1,6 @@
 import { MapContainer, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { cn } from "@/lib/utils";
 
 type MapProps = {
   className?: string;
@@ -29,7 +28,7 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
 export default function Map({ className = "" }: MapProps) {
   return (
     <MapContainer
-      className={cn("", className)}
+      className={className}
       zoom={1}
       minZoom={0}
       maxZoom={5}
