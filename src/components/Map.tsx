@@ -1,9 +1,13 @@
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useEffect } from "react";
+
+type OnResize = number | null;
 
 type MapProps = {
   className?: string;
+  onResize?: OnResize;
 };
 
 const mapExtent = [0, -8192, 8192, 0];
@@ -25,7 +29,26 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
   },
 });
 
-export default function Map({ className = "" }: MapProps) {
+function MapTileLayer({ onResize }: { onResize?: OnResize }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!onResize) return;
+    map.invalidateSize();
+  }, [onResize]);
+
+  return (
+    <TileLayer
+      url="/satellite/{z}/{x}/{y}.png"
+      tileSize={512}
+      attribution=""
+      tms={!0}
+      noWrap={!0}
+    />
+  );
+}
+
+export default function Map({ className = "", onResize }: MapProps) {
   return (
     <MapContainer
       className={className}
@@ -37,13 +60,7 @@ export default function Map({ className = "" }: MapProps) {
       bounds={bounds}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer
-        url="/satellite/{z}/{x}/{y}.png"
-        tileSize={512}
-        attribution=""
-        tms={!0}
-        noWrap={!0}
-      />
+      <MapTileLayer onResize={onResize} />
     </MapContainer>
   );
 }

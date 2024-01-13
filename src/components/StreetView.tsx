@@ -1,43 +1,15 @@
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { useEffect, useState } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-
-const CameraController = () => {
-  const { camera, gl } = useThree();
-  const [controls, setControls] = useState<OrbitControls | null>(null);
-
-  useEffect(() => {
-    if (camera && gl.domElement) {
-      const newControls = new OrbitControls(camera, gl.domElement);
-      newControls.enableDamping = true;
-      newControls.enablePan = false;
-      newControls.rotateSpeed = 0.6;
-      newControls.dampingFactor = 0.3;
-      setControls(newControls);
-
-      return () => {
-        newControls.dispose();
-      };
-    }
-  }, [camera, gl]);
-
-  useFrame(() => {
-    if (controls) {
-      controls.update();
-    }
-  });
-
-  return null;
-};
+import { OrbitControls } from "@react-three/drei";
 
 export default function StreetView() {
   const texture = useLoader(TextureLoader, "/360_1.jpg");
 
   return (
-    <Canvas>
-      <CameraController />
-      <mesh>
+    <Canvas camera={{ fov: 80 }}>
+      <OrbitControls rotateSpeed={0.6} dampingFactor={0.2} />
+      {/* scale={[-1, 1, 1]}, inverts texture to get correct perspective */}
+      <mesh scale={[-1, 1, 1]}>
         <sphereGeometry args={[500, 60, 40]} />
         <meshBasicMaterial map={texture} side={1} />
       </mesh>

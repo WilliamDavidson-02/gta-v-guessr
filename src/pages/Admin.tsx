@@ -16,7 +16,7 @@ export default function Admin() {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <Layout>
+    <Layout className="max-w-[2000px]">
       <Navigation />
       <section className="flex h-[calc(100vh-96px)] gap-4 pb-6">
         <Sheet open={showMenu} onOpenChange={setShowMenu}>
