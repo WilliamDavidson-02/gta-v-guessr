@@ -1,9 +1,27 @@
 import { Canvas, useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { OrbitControls } from "@react-three/drei";
+import { Image } from "lucide-react";
 
-export default function StreetView() {
-  const texture = useLoader(TextureLoader, "/360_1.jpg");
+type StreetViewProps = {
+  url: string;
+};
+
+export default function StreetView({ url }: StreetViewProps) {
+  if (!url) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-secondary">
+          <Image size={64} strokeWidth={1.3} />
+          <p className="select-none text-clip text-nowrap">
+            No panorama provided
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const texture = useLoader(TextureLoader, url);
 
   return (
     <Canvas camera={{ fov: 80 }}>

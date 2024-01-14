@@ -18,10 +18,10 @@ export default function Admin() {
   return (
     <Layout className="max-w-[2000px]">
       <Navigation />
-      <section className="flex h-[calc(100vh-96px)] gap-4 pb-6">
+      <section className="flex h-[calc(100vh-96px)] flex-col gap-4 pb-6 sm:flex-row">
         <Sheet open={showMenu} onOpenChange={setShowMenu}>
           <SheetTrigger asChild>
-            <Button className="h-full" variant="outline">
+            <Button className="sm:h-full" variant="outline">
               <Menu />
             </Button>
           </SheetTrigger>
@@ -55,7 +55,7 @@ export default function Admin() {
             </SheetHeader>
           </SheetContent>
         </Sheet>
-        <div className="h-full flex-grow">
+        <div className="max-h-[calc(100%-56px)] flex-grow sm:max-h-full">
           <Outlet />
         </div>
       </section>

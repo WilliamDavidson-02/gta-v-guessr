@@ -1,13 +1,27 @@
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import { LatLng } from "@/pages/MapBuilder";
 
 type OnResize = number | null;
+
+type Cords = {
+  cords: LatLng;
+  setCords: Dispatch<SetStateAction<LatLng>>;
+};
 
 type MapProps = {
   className?: string;
   onResize?: OnResize;
+  cords: LatLng;
+  setCords: Dispatch<SetStateAction<LatLng>>;
 };
 
 const mapExtent = [0, -8192, 8192, 0];
@@ -29,13 +43,27 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
   },
 });
 
+function LocationMarker({ cords, setCords }: Cords) {
+  useMapEvents({
+    click(ev) {
+      const { lat, lng } = ev.latlng;
+
+      setCords({ lat, lng });
+    },
+  });
+
+  if (cords.lat === 0 && cords.lng === 0) return null;
+
+  return <Marker position={cords} />;
+}
+
 function MapTileLayer({ onResize }: { onResize?: OnResize }) {
   const map = useMap();
 
   useEffect(() => {
     if (!onResize) return;
     map.invalidateSize();
-  }, [onResize]);
+  }, [onResize, map]);
 
   return (
     <TileLayer
@@ -48,19 +76,23 @@ function MapTileLayer({ onResize }: { onResize?: OnResize }) {
   );
 }
 
-export default function Map({ className = "", onResize }: MapProps) {
+export default function Map({
+  className = "",
+  onResize,
+  cords,
+  setCords,
+}: MapProps) {
   return (
     <MapContainer
       className={className}
-      zoom={1}
       minZoom={0}
       maxZoom={5}
       crs={CRS}
-      scrollWheelZoom={true}
       bounds={bounds}
       style={{ height: "100%", width: "100%" }}
     >
       <MapTileLayer onResize={onResize} />
+      <LocationMarker cords={cords} setCords={setCords} />
     </MapContainer>
   );
 }
