@@ -1,14 +1,16 @@
 import { ChangeEvent } from "react";
 
 export function getImageData(ev: ChangeEvent<HTMLInputElement>) {
-  const dataTransfer = new DataTransfer();
-
-  // Add image
+  // File is immutable, create a copy of it to format the name
   const image = ev.target.files![0];
-  dataTransfer.items.add(image);
+  const timeStamp = new Date().getTime();
+  const [name, type] = image.name.split(".");
+  const newName = `${timeStamp}_${name}.${type}`;
 
-  const file = dataTransfer.files[0];
-  const url = URL.createObjectURL(image);
+  // Create a new File object with the new name
+  const file = new File([image], newName, { type: image.type });
+
+  const url = URL.createObjectURL(file);
 
   return { file, url };
 }

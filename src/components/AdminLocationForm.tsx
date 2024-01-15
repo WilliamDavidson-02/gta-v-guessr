@@ -12,13 +12,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Input } from "./ui/input";
 import { LatLng } from "@/pages/MapBuilder";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { getImageData } from "@/lib/actions";
-
-// Images
-const MAX_IMAGE_SIZE = 5242880; // 5 MB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
+import { Loader2 } from "lucide-react";
+import supabase from "@/supabase/supabaseConfig";
 
 const formSchema = z.object({
   latitude: z.number({
@@ -27,20 +25,9 @@ const formSchema = z.object({
   longitude: z.number({
     invalid_type_error: "Pleas provide a number for longitude",
   }),
-  panorama: z
-    .custom<FileList>((val) => val instanceof FileList, "Required")
-    .refine((files) => files.length > 0, `Required`)
-    .refine(
-      (files) => Array.from(files).every((file) => file.size <= MAX_IMAGE_SIZE),
-      `Each file size should be less than 5 MB.`,
-    )
-    .refine(
-      (files) =>
-        Array.from(files).every((file) =>
-          ALLOWED_IMAGE_TYPES.includes(file.type),
-        ),
-      "Only these types are allowed .jpg, .jpeg and .png",
-    ),
+  panorama: z.instanceof(File).refine((file) => file.size > 0, {
+    message: "Please upload a panorama image for this location",
+  }),
 });
 
 type AdminLocationFormProps = {
@@ -63,14 +50,43 @@ export default function AdminLocationForm({
       panorama: undefined,
     },
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     form.setValue("latitude", cords.lat);
     form.setValue("longitude", cords.lng);
   }, [cords, setCords]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     console.log(values);
+    const { latitude, longitude, panorama } = values;
+
+    // Upload image to bucket
+    const { error: storageError } = await supabase.storage
+      .from("panorama_views")
+      .upload(`/${panorama.name}`, panorama);
+
+    // Add chadcn toast
+    if (storageError) {
+      setIsLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("locations")
+      .insert({ lat: latitude, lng: longitude, panorama_url: panorama.name })
+      .select();
+
+    // Add chadcn toast
+    if (error) {
+      console.log(error);
+      setIsLoading(false);
+      return;
+    }
+
+    console.log({ data, error });
+    setIsLoading(false);
   };
 
   return (
@@ -134,8 +150,12 @@ export default function AdminLocationForm({
             </FormItem>
           )}
         />
-        <Button className="mt-4 w-full" type="submit">
-          Submit
+        <Button
+          className="mt-4 w-full"
+          type="submit"
+          disabled={isLoading || !form.formState.isValid}
+        >
+          {isLoading ? <Loader2 className="animate-spin" /> : "Submit"}
         </Button>
       </form>
     </Form>

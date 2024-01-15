@@ -7,17 +7,45 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense, useState } from "react";
+import supabase from "@/supabase/supabaseConfig";
+import { Suspense, useEffect, useState } from "react";
 
 export type LatLng = {
   lat: number;
   lng: number;
 };
 
+export type LocationType = {
+  id: string;
+  lat: number;
+  lng: number;
+  panorama_url: string;
+};
+
+export const bucketPath = `${
+  import.meta.env.VITE_SUPABASE_URL
+}/storage/v1/object/public/panorama_views/`;
+
 export default function MapBuilder() {
   const [mapResize, setMapResize] = useState(50); // range from 0 - 100
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [previewUrl, setPreviewUrl] = useState("");
+  const [locations, setLocations] = useState<LocationType[]>([]);
+
+  useEffect(() => {
+    const getMarkedLocation = async () => {
+      const { data, error } = await supabase.from("locations").select();
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setLocations(data);
+    };
+
+    getMarkedLocation();
+  }, []);
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden">
@@ -50,7 +78,13 @@ export default function MapBuilder() {
             <Suspense
               fallback={<Skeleton className="h-full w-full rounded-none" />}
             >
-              <Map cords={cords} setCords={setCords} onResize={mapResize} />
+              <Map
+                cords={cords}
+                setCords={setCords}
+                onResize={mapResize}
+                locations={locations}
+                setPreviewUrl={setPreviewUrl}
+              />
             </Suspense>
           </ResizablePanel>
         </ResizablePanelGroup>

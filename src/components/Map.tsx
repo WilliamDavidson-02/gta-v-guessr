@@ -8,7 +8,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { LatLng } from "@/pages/MapBuilder";
+import { LatLng, LocationType, bucketPath } from "@/pages/MapBuilder";
 
 type OnResize = number | null;
 
@@ -22,6 +22,8 @@ type MapProps = {
   onResize?: OnResize;
   cords: LatLng;
   setCords: Dispatch<SetStateAction<LatLng>>;
+  locations: LocationType[];
+  setPreviewUrl: Dispatch<SetStateAction<string>>;
 };
 
 const mapExtent = [0, -8192, 8192, 0];
@@ -42,6 +44,32 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
     return Math.log(scale * minResolution) / Math.LN2;
   },
 });
+
+function DisplayLocationMarkers({
+  locations,
+  setPreviewUrl,
+  setCords,
+}: {
+  locations: LocationType[];
+  setPreviewUrl: Dispatch<SetStateAction<string>>;
+  setCords: Dispatch<SetStateAction<LatLng>>;
+}) {
+  return locations.map((location) => {
+    const { lat, lng } = location;
+    return (
+      <Marker
+        key={location.id}
+        position={{ lat, lng }}
+        eventHandlers={{
+          click: () => {
+            setCords({ lat, lng });
+            setPreviewUrl(bucketPath + location.panorama_url);
+          },
+        }}
+      />
+    );
+  });
+}
 
 function LocationMarker({ cords, setCords }: Cords) {
   useMapEvents({
@@ -81,6 +109,8 @@ export default function Map({
   onResize,
   cords,
   setCords,
+  locations,
+  setPreviewUrl,
 }: MapProps) {
   return (
     <MapContainer
@@ -93,6 +123,11 @@ export default function Map({
     >
       <MapTileLayer onResize={onResize} />
       <LocationMarker cords={cords} setCords={setCords} />
+      <DisplayLocationMarkers
+        locations={locations}
+        setPreviewUrl={setPreviewUrl}
+        setCords={setCords}
+      />
     </MapContainer>
   );
 }
