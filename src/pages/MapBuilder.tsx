@@ -1,6 +1,5 @@
 import AdminLocationForm from "@/components/AdminLocationForm";
 import Map from "@/components/Map";
-import StreetView from "@/components/StreetView";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -19,12 +18,12 @@ export type LocationType = {
   id: string;
   lat: number;
   lng: number;
-  panorama_url: string;
+  image_url: string;
 };
 
 export const bucketPath = `${
   import.meta.env.VITE_SUPABASE_URL
-}/storage/v1/object/public/panorama_views/`;
+}/storage/v1/object/public/image_views/`;
 
 export default function MapBuilder() {
   const [mapResize, setMapResize] = useState(50); // range from 0 - 100
@@ -55,23 +54,12 @@ export default function MapBuilder() {
           direction="horizontal"
         >
           <ResizablePanel>
-            <ResizablePanelGroup direction="vertical">
-              <ResizablePanel>
-                <AdminLocationForm
-                  setPreviewUrl={setPreviewUrl}
-                  cords={cords}
-                  setCords={setCords}
-                />
-              </ResizablePanel>
-              <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
-              <ResizablePanel defaultSize={70}>
-                <Suspense
-                  fallback={<Skeleton className="h-full w-full rounded-none" />}
-                >
-                  <StreetView url={previewUrl} />
-                </Suspense>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            <AdminLocationForm
+              setPreviewUrl={setPreviewUrl}
+              previewUrl={previewUrl}
+              cords={cords}
+              setCords={setCords}
+            />
           </ResizablePanel>
           <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
           <ResizablePanel onResize={(size) => setMapResize(size)}>

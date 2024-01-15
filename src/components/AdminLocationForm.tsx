@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import { getImageData } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import supabase from "@/supabase/supabaseConfig";
+import LocationView from "./LocationView";
 
 const formSchema = z.object({
   latitude: z.number({
@@ -25,20 +26,22 @@ const formSchema = z.object({
   longitude: z.number({
     invalid_type_error: "Pleas provide a number for longitude",
   }),
-  panorama: z.instanceof(File).refine((file) => file.size > 0, {
-    message: "Please upload a panorama image for this location",
+  image: z.instanceof(File).refine((file) => file.size > 0, {
+    message: "Please upload a image for this location",
   }),
 });
 
 type AdminLocationFormProps = {
   cords: LatLng;
   setCords: Dispatch<SetStateAction<LatLng>>;
+  previewUrl: string;
   setPreviewUrl: Dispatch<SetStateAction<string>>;
 };
 
 export default function AdminLocationForm({
   cords,
   setCords,
+  previewUrl,
   setPreviewUrl,
 }: AdminLocationFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,7 +50,7 @@ export default function AdminLocationForm({
     defaultValues: {
       latitude: 0,
       longitude: 0,
-      panorama: undefined,
+      image: undefined,
     },
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -59,13 +62,12 @@ export default function AdminLocationForm({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    console.log(values);
-    const { latitude, longitude, panorama } = values;
+    const { latitude, longitude, image } = values;
 
     // Upload image to bucket
     const { error: storageError } = await supabase.storage
-      .from("panorama_views")
-      .upload(`/${panorama.name}`, panorama);
+      .from("image_views")
+      .upload(`/${image.name}`, image);
 
     // Add chadcn toast
     if (storageError) {
@@ -75,7 +77,7 @@ export default function AdminLocationForm({
 
     const { data, error } = await supabase
       .from("locations")
-      .insert({ lat: latitude, lng: longitude, panorama_url: panorama.name })
+      .insert({ lat: latitude, lng: longitude, image_url: image.name })
       .select();
 
     // Add chadcn toast
@@ -91,7 +93,10 @@ export default function AdminLocationForm({
 
   return (
     <Form {...form}>
-      <form className="p-4" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-4 p-4"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <FormField
           control={form.control}
           name="latitude"
@@ -126,10 +131,10 @@ export default function AdminLocationForm({
         />
         <FormField
           control={form.control}
-          name="panorama"
+          name="image"
           render={({ field: { onChange, value, ...rest } }) => (
             <FormItem className="grid grid-cols-3 items-center gap-x-2">
-              <FormLabel className="col-span-1">panorama</FormLabel>
+              <FormLabel className="col-span-1">image</FormLabel>
               <FormControl className="col-span-2">
                 <Input
                   type="file"
@@ -144,14 +149,15 @@ export default function AdminLocationForm({
                 />
               </FormControl>
               <FormDescription className="col-span-3">
-                Upload a panorama image
+                Upload an image
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+        <LocationView url={previewUrl} className="mx-auto max-h-[800px]" />
         <Button
-          className="mt-4 w-full"
+          className="w-full"
           type="submit"
           disabled={isLoading || !form.formState.isValid}
         >

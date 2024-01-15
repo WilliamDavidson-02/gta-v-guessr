@@ -63,7 +63,7 @@ function DisplayLocationMarkers({
         eventHandlers={{
           click: () => {
             setCords({ lat, lng });
-            setPreviewUrl(bucketPath + location.panorama_url);
+            setPreviewUrl(bucketPath + location.image_url);
           },
         }}
       />
