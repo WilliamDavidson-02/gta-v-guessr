@@ -2,6 +2,7 @@ import { ReactNode, createContext, useEffect, useRef, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import supabase from "@/supabase/supabaseConfig";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 type SignInCredentials = {
   email: string;
@@ -65,7 +66,10 @@ export default function UserContextProvider({
   const signInWithPassword = async (credentials: SignInCredentials) => {
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
-    if (error) return;
+    if (error) {
+      toast.error("Failed Login: Invalid credentials.");
+      return;
+    }
     setUser(data.user);
     navigate("/");
   };
@@ -79,7 +83,10 @@ export default function UserContextProvider({
         data: { username, theme: "dark", access_role: "guessr" },
       },
     });
-    if (error) return;
+    if (error) {
+      toast.error("Failed Registration: Pleas try again.");
+      return;
+    }
     setUser(data.user);
     navigate("/");
   };

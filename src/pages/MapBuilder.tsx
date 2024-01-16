@@ -1,4 +1,4 @@
-import AdminLocationForm from "@/components/AdminLocationForm";
+import { LocationForm } from "@/components/LocationForm";
 import Map from "@/components/Map";
 import {
   ResizableHandle,
@@ -21,15 +21,16 @@ export type LocationType = {
   image_url: string;
 };
 
-export const bucketPath = `${
-  import.meta.env.VITE_SUPABASE_URL
-}/storage/v1/object/public/image_views/`;
+export type Image = {
+  file: File;
+  url: string;
+};
 
 export default function MapBuilder() {
   const [mapResize, setMapResize] = useState(50); // range from 0 - 100
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
-  const [previewUrl, setPreviewUrl] = useState("");
   const [locations, setLocations] = useState<LocationType[]>([]);
+  const [image, setImage] = useState<Image | null>(null);
 
   useEffect(() => {
     const getMarkedLocation = async () => {
@@ -54,12 +55,7 @@ export default function MapBuilder() {
           direction="horizontal"
         >
           <ResizablePanel>
-            <AdminLocationForm
-              setPreviewUrl={setPreviewUrl}
-              previewUrl={previewUrl}
-              cords={cords}
-              setCords={setCords}
-            />
+            <LocationForm image={image} setImage={setImage} />
           </ResizablePanel>
           <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
           <ResizablePanel onResize={(size) => setMapResize(size)}>
@@ -71,7 +67,6 @@ export default function MapBuilder() {
                 setCords={setCords}
                 onResize={mapResize}
                 locations={locations}
-                setPreviewUrl={setPreviewUrl}
               />
             </Suspense>
           </ResizablePanel>

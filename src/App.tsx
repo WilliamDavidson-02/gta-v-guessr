@@ -4,6 +4,7 @@ import { PrivateRoutes, AdminRoute } from "./lib/PrivateRoutes";
 import UserContextProvider from "./context/UserContext";
 import AdminStats from "./pages/AdminStats";
 import MapBuilder from "./pages/MapBuilder";
+import { Toaster } from "@/components/ui/sonner";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -29,6 +30,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster />
       </UserContextProvider>
     </BrowserRouter>
   );
