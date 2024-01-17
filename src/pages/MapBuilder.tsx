@@ -31,6 +31,7 @@ export default function MapBuilder() {
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [locations, setLocations] = useState<LocationType[]>([]);
   const [image, setImage] = useState<Image | null>(null);
+  const [pinMap, setPinMap] = useState(false);
 
   useEffect(() => {
     const getMarkedLocation = async () => {
@@ -55,7 +56,14 @@ export default function MapBuilder() {
           direction="horizontal"
         >
           <ResizablePanel>
-            <LocationForm image={image} setImage={setImage} />
+            <LocationForm
+              image={image}
+              setImage={setImage}
+              pinMap={pinMap}
+              setPinMap={setPinMap}
+              cords={cords}
+              setCords={setCords}
+            />
           </ResizablePanel>
           <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
           <ResizablePanel onResize={(size) => setMapResize(size)}>
@@ -66,6 +74,8 @@ export default function MapBuilder() {
                 cords={cords}
                 setCords={setCords}
                 onResize={mapResize}
+                pinMap={pinMap}
+                setPinMap={setPinMap}
                 locations={locations}
               />
             </Suspense>

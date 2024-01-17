@@ -9,21 +9,28 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { LatLng, LocationType } from "@/pages/MapBuilder";
+import { cn } from "@/lib/utils";
 
 type OnResize = number | null;
 
-type Cords = {
+export type Cords = {
   cords: LatLng;
   setCords: Dispatch<SetStateAction<LatLng>>;
 };
 
-type MapProps = {
-  className?: string;
-  onResize?: OnResize;
-  cords: LatLng;
-  setCords: Dispatch<SetStateAction<LatLng>>;
-  locations: LocationType[];
+type PinMap = {
+  pinMap: boolean;
+  setPinMap: Dispatch<SetStateAction<boolean>>;
 };
+
+type MapProps = Cords &
+  PinMap & {
+    className?: string;
+    onResize?: OnResize;
+    locations: LocationType[];
+  };
+
+type LocationMarkerProps = Cords & PinMap;
 
 const mapExtent = [0, -8192, 8192, 0];
 const bounds: [number, number][] = [
@@ -59,16 +66,23 @@ function DisplayLocationMarkers({ locations }: { locations: LocationType[] }) {
   });
 }
 
-function LocationMarker({ cords, setCords }: Cords) {
+function LocationMarker({
+  cords,
+  setCords,
+  pinMap,
+  setPinMap,
+}: LocationMarkerProps) {
   useMapEvents({
     click(ev) {
+      if (!pinMap) return;
       const { lat, lng } = ev.latlng;
 
+      setPinMap(false);
       setCords({ lat, lng });
     },
   });
 
-  if (cords.lat === 0 && cords.lng === 0) return null;
+  if (!cords.lat && !cords.lng) return null;
 
   return <Marker position={cords} />;
 }
@@ -98,10 +112,12 @@ export default function Map({
   cords,
   setCords,
   locations,
+  pinMap,
+  setPinMap,
 }: MapProps) {
   return (
     <MapContainer
-      className={className}
+      className={cn(className)}
       minZoom={0}
       maxZoom={5}
       crs={CRS}
@@ -109,7 +125,12 @@ export default function Map({
       style={{ height: "100%", width: "100%" }}
     >
       <MapTileLayer onResize={onResize} />
-      <LocationMarker cords={cords} setCords={setCords} />
+      <LocationMarker
+        cords={cords}
+        setCords={setCords}
+        pinMap={pinMap}
+        setPinMap={setPinMap}
+      />
       <DisplayLocationMarkers locations={locations} />
     </MapContainer>
   );
