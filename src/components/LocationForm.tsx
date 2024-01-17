@@ -28,6 +28,8 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Label } from "./ui/label";
 
 type LocationFormProps = Cords & {
   image: ImageType | null;
@@ -36,6 +38,9 @@ type LocationFormProps = Cords & {
   setPinMap: Dispatch<SetStateAction<boolean>>;
   className?: string | undefined;
 };
+
+const levels: [string, ...string[]] = ["easy", "medium", "hard"];
+const acceptedFiles = "image/jpeg, image/jpg, image/png";
 
 const locationSchema = z.object({
   image: z
@@ -47,9 +52,8 @@ const locationSchema = z.object({
   lng: z.number({
     invalid_type_error: "Enter or select a longitude point for this location",
   }),
+  level: z.enum(levels),
 });
-
-const acceptedFiles = "image/jpeg, image/jpg, image/png";
 
 const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
   (
@@ -73,6 +77,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         image: undefined,
         lat: cords.lat,
         lng: cords.lng,
+        level: "easy",
       },
     });
 
@@ -167,7 +172,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                         )}
                       >
                         {image ? (
-                          <UploadImage src={image.url} />
+                          <UploadImage className="h-full" src={image.url} />
                         ) : (
                           <>
                             <Upload size={40} />
@@ -199,7 +204,12 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                       </div>
                       <Trash2
                         className="cursor-pointer select-none transition-colors hover:text-destructive"
-                        onClick={() => setImage(null)}
+                        onClick={() => {
+                          setImage(null);
+                          form.setValue("image", undefined, {
+                            shouldValidate: true,
+                          });
+                        }}
                         size={20}
                       />
                     </div>
@@ -208,12 +218,12 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                 </FormItem>
               )}
             />
-            <div className="my-4 flex gap-2">
+            <div className="my-4 grid min-w-[200px] grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="lat"
                 render={({ field }) => (
-                  <FormItem className="flex-grow">
+                  <FormItem className="col-span-2 sm:col-span-1">
                     <FormLabel>Latitude</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -226,16 +236,17 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                 control={form.control}
                 name="lng"
                 render={({ field }) => (
-                  <FormItem className="flex-grow">
+                  <FormItem className="col-span-2 sm:col-span-1">
                     <FormLabel>Longitude</FormLabel>
                     <FormControl>
-                      <Input className="flex-grow" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <Toggle
+                className="col-span-2"
                 data-state={pinMap ? "on" : "off"}
                 onClick={() => setPinMap((prev) => !prev)}
                 variant="outline"
@@ -243,6 +254,29 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                 <MapPin />
               </Toggle>
             </div>
+            <FormField
+              control={form.control}
+              name="level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Difficulty level</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={levels[0]}
+                      className="flex flex-wrap gap-6"
+                    >
+                      {levels.map((level) => (
+                        <div key={level} className="flex items-center gap-2">
+                          <RadioGroupItem value={level} />
+                          <Label htmlFor={level}>{level}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
           <Button
             type="submit"
