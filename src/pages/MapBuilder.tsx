@@ -21,7 +21,7 @@ export type LocationType = {
   image_url: string;
 };
 
-export type Image = {
+export type ImageType = {
   file: File;
   url: string;
 };
@@ -30,7 +30,7 @@ export default function MapBuilder() {
   const [mapResize, setMapResize] = useState(50); // range from 0 - 100
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [locations, setLocations] = useState<LocationType[]>([]);
-  const [image, setImage] = useState<Image | null>(null);
+  const [image, setImage] = useState<ImageType | null>(null);
   const [pinMap, setPinMap] = useState(false);
 
   useEffect(() => {

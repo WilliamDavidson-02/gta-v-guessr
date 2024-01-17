@@ -1,4 +1,4 @@
-import { MapPin, Trash2, Upload } from "lucide-react";
+import { Loader2, MapPin, Trash2, Upload } from "lucide-react";
 import {
   ChangeEvent,
   Dispatch,
@@ -6,6 +6,7 @@ import {
   FormEvent,
   SetStateAction,
   forwardRef,
+  useEffect,
   useState,
 } from "react";
 import { Button } from "./ui/button";
@@ -13,17 +14,40 @@ import { Input } from "./ui/input";
 import { cn, validateFileType } from "@/lib/utils";
 import { toast } from "sonner";
 import { UploadImage } from "./UploadImage";
-import { Image } from "@/pages/MapBuilder";
+import { ImageType } from "@/pages/MapBuilder";
 import { Toggle } from "./ui/toggle";
 import { Cords } from "./Map";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form";
 
 type LocationFormProps = Cords & {
-  image: Image | null;
-  setImage: Dispatch<SetStateAction<Image | null>>;
+  image: ImageType | null;
+  setImage: Dispatch<SetStateAction<ImageType | null>>;
   pinMap: boolean;
   setPinMap: Dispatch<SetStateAction<boolean>>;
   className?: string | undefined;
 };
+
+const locationSchema = z.object({
+  image: z
+    .optional(z.instanceof(File))
+    .refine((file) => file && file.size > 0, "Please upload an image"),
+  lat: z.number({
+    invalid_type_error: "Enter or select a latitude point for this location",
+  }),
+  lng: z.number({
+    invalid_type_error: "Enter or select a longitude point for this location",
+  }),
+});
 
 const acceptedFiles = "image/jpeg, image/jpg, image/png";
 
@@ -41,10 +65,26 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
     },
     ref,
   ) => {
+    const [isLoading, setIsLoading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
+    const form = useForm<z.infer<typeof locationSchema>>({
+      resolver: zodResolver(locationSchema),
+      defaultValues: {
+        image: undefined,
+        lat: cords.lat,
+        lng: cords.lng,
+      },
+    });
 
-    const handleSubmit = (ev: FormEvent) => {
-      ev.preventDefault();
+    useEffect(() => {
+      form.setValue("lat", cords.lat);
+      form.setValue("lng", cords.lng);
+    }, [cords, setCords]);
+
+    const handleLocationSubmit = (values: z.infer<typeof locationSchema>) => {
+      setIsLoading(true);
+      console.log(values);
+      setTimeout(() => setIsLoading(false), 3000);
     };
 
     const processFile = (file: File) => {
@@ -60,6 +100,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       const url = URL.createObjectURL(file);
 
       setImage({ file, url });
+      form.setValue("image", file, { shouldValidate: true });
     };
 
     const handleImageChange = (ev: ChangeEvent<HTMLInputElement>) => {
@@ -95,100 +136,128 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
     };
 
     return (
-      <form
-        onSubmit={handleSubmit}
-        onDragEnter={handleDrag}
-        className="flex h-full w-full flex-col justify-between p-4"
-      >
-        <div>
-          <label
-            htmlFor="dropzone-image"
-            className={cn(
-              "mx-auto flex aspect-video max-h-[700px] min-h-[400px] w-full overflow-hidden rounded-md border border-dashed border-border transition-colors duration-200",
-              { "bg-secondary": dragActive },
-              { "border-solid": image },
-            )}
-          >
-            <div
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              className={cn(
-                "flex w-full cursor-pointer select-none flex-col items-center justify-center gap-4 text-secondary",
-                { "text-primary": dragActive },
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleLocationSubmit)}
+          className="flex h-full w-full flex-col justify-between p-4"
+        >
+          <div>
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field: { value, ...rest } }) => (
+                <FormItem>
+                  <FormControl>
+                    <label
+                      htmlFor="image"
+                      className={cn(
+                        "mx-auto flex aspect-video max-h-[700px] min-h-[400px] w-full overflow-hidden rounded-md border border-dashed border-border transition-colors duration-200",
+                        { "bg-secondary": dragActive },
+                        { "border-solid": image },
+                      )}
+                    >
+                      <div
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                        className={cn(
+                          "flex w-full cursor-pointer select-none flex-col items-center justify-center gap-4 text-secondary",
+                          { "text-primary": dragActive },
+                        )}
+                      >
+                        {image ? (
+                          <UploadImage src={image.url} />
+                        ) : (
+                          <>
+                            <Upload size={40} />
+                            <p className="text-clip text-nowrap text-sm">
+                              Click to upload or drag and drop.
+                            </p>
+                          </>
+                        )}
+                        <input
+                          {...props}
+                          {...rest}
+                          ref={ref}
+                          multiple={false}
+                          onChange={handleImageChange}
+                          accept={acceptedFiles}
+                          id="image"
+                          name="image"
+                          type="file"
+                          className="hidden"
+                        />
+                      </div>
+                    </label>
+                  </FormControl>
+                  {image && (
+                    <div className="mt-4 flex w-full items-center gap-4 rounded-md border border-border bg-background p-2">
+                      <div className="flex flex-grow items-center gap-4 text-sm">
+                        <span>{image.file.name}</span>
+                        <span>{(image.file.size / 1000).toFixed(0)}KB</span>
+                      </div>
+                      <Trash2
+                        className="cursor-pointer select-none transition-colors hover:text-destructive"
+                        onClick={() => setImage(null)}
+                        size={20}
+                      />
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
               )}
-            >
-              {image ? (
-                <UploadImage src={image.url} />
-              ) : (
-                <>
-                  <Upload size={40} />
-                  <p className="text-clip text-nowrap text-sm">
-                    Click to upload or drag and drop.
-                  </p>
-                </>
-              )}
-              <input
-                {...props}
-                ref={ref}
-                multiple={false}
-                onChange={handleImageChange}
-                accept={acceptedFiles}
-                id="dropzone-image"
-                name="dropzone-image"
-                type="file"
-                className="hidden"
-              />
-            </div>
-          </label>
-          {image && (
-            <div className="mt-4 flex w-full items-center gap-4 rounded-md border border-border bg-background p-2">
-              <div className="flex flex-grow items-center gap-4 text-sm">
-                <span>{image.file.name}</span>
-                <span>{(image.file.size / 1000).toFixed(0)}KB</span>
-              </div>
-              <Trash2
-                className="cursor-pointer select-none transition-colors hover:text-destructive"
-                onClick={() => setImage(null)}
-                size={20}
-              />
-            </div>
-          )}
-          <div className="my-4 flex gap-2">
-            <Input
-              value={cords.lat}
-              onChange={(ev) =>
-                setCords((prev) => ({
-                  ...prev,
-                  lat: parseFloat(ev.target.value),
-                }))
-              }
-              placeholder="Latitude"
             />
-            <Input
-              value={cords.lng}
-              onChange={(ev) =>
-                setCords((prev) => ({
-                  ...prev,
-                  lng: parseFloat(ev.target.value),
-                }))
-              }
-              placeholder="Longitude"
-            />
-            <Toggle
-              data-state={pinMap ? "on" : "off"}
-              onClick={() => setPinMap((prev) => !prev)}
-              variant="outline"
-            >
-              <MapPin />
-            </Toggle>
+            <div className="my-4 flex gap-2">
+              <FormField
+                control={form.control}
+                name="lat"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormLabel>Latitude</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lng"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormLabel>Longitude</FormLabel>
+                    <FormControl>
+                      <Input className="flex-grow" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Toggle
+                data-state={pinMap ? "on" : "off"}
+                onClick={() => setPinMap((prev) => !prev)}
+                variant="outline"
+              >
+                <MapPin />
+              </Toggle>
+            </div>
           </div>
-        </div>
-        <Button variant="outline" className="w-full">
-          Submit
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            variant="outline"
+            className="w-full select-none"
+            disabled={!form.formState.isValid}
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <span>Submit</span>
+            )}
+          </Button>
+        </form>
+      </Form>
     );
   },
 );
