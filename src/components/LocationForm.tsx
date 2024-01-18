@@ -3,7 +3,6 @@ import {
   ChangeEvent,
   Dispatch,
   DragEvent,
-  FormEvent,
   SetStateAction,
   forwardRef,
   useEffect,
@@ -11,10 +10,10 @@ import {
 } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { cn, validateFileType } from "@/lib/utils";
+import { cn, kebabCase, validateFileType } from "@/lib/utils";
 import { toast } from "sonner";
 import { UploadImage } from "./UploadImage";
-import { ImageType } from "@/pages/MapBuilder";
+import { ImageType, LocationType } from "@/pages/MapBuilder";
 import { Toggle } from "./ui/toggle";
 import { Cords } from "./Map";
 import * as z from "zod";
@@ -30,6 +29,7 @@ import {
 } from "./ui/form";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
+import supabase from "@/supabase/supabaseConfig";
 
 type LocationFormProps = Cords & {
   image: ImageType | null;
@@ -37,6 +37,7 @@ type LocationFormProps = Cords & {
   pinMap: boolean;
   setPinMap: Dispatch<SetStateAction<boolean>>;
   className?: string | undefined;
+  setLocations: Dispatch<SetStateAction<LocationType[]>>;
 };
 
 const levels: [string, ...string[]] = ["easy", "medium", "hard"];
@@ -65,6 +66,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       cords,
       setCords,
       className,
+      setLocations,
       ...props
     },
     ref,
@@ -86,10 +88,54 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       form.setValue("lng", cords.lng);
     }, [cords, setCords]);
 
-    const handleLocationSubmit = (values: z.infer<typeof locationSchema>) => {
+    const handleLocationSubmit = async (
+      values: z.infer<typeof locationSchema>,
+    ) => {
       setIsLoading(true);
       console.log(values);
-      setTimeout(() => setIsLoading(false), 3000);
+      if (!values.image) {
+        toast.error("No image provided", {
+          description: "Pleas provide an image for this location.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: bucket, error: bucketError } = await supabase.storage
+        .from("image_views")
+        .upload(
+          `${new Date().getTime()}-${kebabCase(values.image.name)}`,
+          values.image,
+        );
+
+      if (bucketError) {
+        toast.error("Failed uploading image", {
+          description: "Error while uploading image pleas try again.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { lat, lng, level } = values;
+
+      const { data: location, error: locationError } = await supabase
+        .from("locations")
+        .insert({ lat, lng, image_path: bucket.path, level })
+        .select();
+
+      if (locationError) {
+        toast.error("Failed saving location", {
+          description: "Error while saving location, please try again.",
+        });
+        return;
+      }
+
+      setLocations((prev) => [...prev, location[0]]);
+      setCords({ lat: 0, lng: 0 });
+      setImage(null);
+      setIsLoading(false);
+
+      form.reset;
     };
 
     const processFile = (file: File) => {
@@ -268,7 +314,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                     >
                       {levels.map((level) => (
                         <div key={level} className="flex items-center gap-2">
-                          <RadioGroupItem value={level} />
+                          <RadioGroupItem id={level} value={level} />
                           <Label htmlFor={level}>{level}</Label>
                         </div>
                       ))}

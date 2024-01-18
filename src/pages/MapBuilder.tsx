@@ -18,7 +18,8 @@ export type LocationType = {
   id: string;
   lat: number;
   lng: number;
-  image_url: string;
+  level: string;
+  image_path: string;
 };
 
 export type ImageType = {
@@ -63,6 +64,7 @@ export default function MapBuilder() {
               setPinMap={setPinMap}
               cords={cords}
               setCords={setCords}
+              setLocations={setLocations}
             />
           </ResizablePanel>
           <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
