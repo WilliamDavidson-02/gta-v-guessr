@@ -6,8 +6,11 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createFileBlobFromUrl } from "@/lib/utils";
 import supabase from "@/supabase/supabaseConfig";
 import { Suspense, useEffect, useState } from "react";
+import { Marker } from "react-leaflet";
+import { toast } from "sonner";
 
 export type LatLng = {
   lat: number;
@@ -28,18 +31,21 @@ export type ImageType = {
 };
 
 export default function MapBuilder() {
-  const [mapResize, setMapResize] = useState(50); // range from 0 - 100
+  const [mapResize, setMapResize] = useState(50);
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [locations, setLocations] = useState<LocationType[]>([]);
   const [image, setImage] = useState<ImageType | null>(null);
   const [pinMap, setPinMap] = useState(false);
+  const [activeLocation, setActiveLocation] = useState<LocationType | null>(
+    null,
+  );
 
   useEffect(() => {
     const getMarkedLocation = async () => {
       const { data, error } = await supabase.from("locations").select();
 
       if (error) {
-        console.log(error);
+        toast.error("Error while getting locations.");
         return;
       }
 
@@ -48,6 +54,15 @@ export default function MapBuilder() {
 
     getMarkedLocation();
   }, []);
+
+  const getImageFile = async (path: string) => {
+    if (path === image?.file.name) return;
+
+    const { data } = supabase.storage.from("image_views").getPublicUrl(path);
+    const file = await createFileBlobFromUrl(data.publicUrl);
+
+    setImage({ url: data.publicUrl, file });
+  };
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden">
@@ -60,6 +75,8 @@ export default function MapBuilder() {
             <LocationForm
               image={image}
               setImage={setImage}
+              activeLocation={activeLocation}
+              setActiveLocation={setActiveLocation}
               pinMap={pinMap}
               setPinMap={setPinMap}
               cords={cords}
@@ -78,8 +95,26 @@ export default function MapBuilder() {
                 onResize={mapResize}
                 pinMap={pinMap}
                 setPinMap={setPinMap}
-                locations={locations}
-              />
+              >
+                <>
+                  {locations.map((location) => {
+                    const { lat, lng } = location;
+                    return (
+                      <Marker
+                        key={location.id}
+                        position={{ lat, lng }}
+                        eventHandlers={{
+                          click: () => {
+                            setActiveLocation(location);
+                            setCords({ lat, lng });
+                            getImageFile(location.image_path);
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </>
+              </Map>
             </Suspense>
           </ResizablePanel>
         </ResizablePanelGroup>

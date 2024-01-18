@@ -7,8 +7,8 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Dispatch, SetStateAction, useEffect } from "react";
-import { LatLng, LocationType } from "@/pages/MapBuilder";
+import { Dispatch, ReactNode, SetStateAction, useEffect } from "react";
+import { LatLng } from "@/pages/MapBuilder";
 import { cn } from "@/lib/utils";
 
 type OnResize = number | null;
@@ -27,7 +27,7 @@ type MapProps = Cords &
   PinMap & {
     className?: string;
     onResize?: OnResize;
-    locations: LocationType[];
+    children?: ReactNode;
   };
 
 type LocationMarkerProps = Cords & PinMap;
@@ -50,21 +50,6 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
     return Math.log(scale * minResolution) / Math.LN2;
   },
 });
-
-function DisplayLocationMarkers({ locations }: { locations: LocationType[] }) {
-  return locations.map((location) => {
-    const { lat, lng } = location;
-    return (
-      <Marker
-        key={location.id}
-        position={{ lat, lng }}
-        eventHandlers={{
-          click: () => console.log(location),
-        }}
-      />
-    );
-  });
-}
 
 function LocationMarker({
   cords,
@@ -111,9 +96,9 @@ export default function Map({
   onResize,
   cords,
   setCords,
-  locations,
   pinMap,
   setPinMap,
+  children,
 }: MapProps) {
   return (
     <MapContainer
@@ -131,7 +116,7 @@ export default function Map({
         pinMap={pinMap}
         setPinMap={setPinMap}
       />
-      <DisplayLocationMarkers locations={locations} />
+      {children}
     </MapContainer>
   );
 }

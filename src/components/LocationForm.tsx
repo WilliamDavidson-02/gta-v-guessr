@@ -30,10 +30,24 @@ import {
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import supabase from "@/supabase/supabaseConfig";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 type LocationFormProps = Cords & {
   image: ImageType | null;
   setImage: Dispatch<SetStateAction<ImageType | null>>;
+  activeLocation: LocationType | null;
+  setActiveLocation: Dispatch<SetStateAction<LocationType | null>>;
   pinMap: boolean;
   setPinMap: Dispatch<SetStateAction<boolean>>;
   className?: string | undefined;
@@ -61,6 +75,8 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
     {
       image,
       setImage,
+      activeLocation,
+      setActiveLocation,
       pinMap,
       setPinMap,
       cords,
@@ -79,20 +95,32 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         image: undefined,
         lat: cords.lat,
         lng: cords.lng,
-        level: "easy",
+        level: levels[0],
       },
     });
+
+    useEffect(() => {
+      if (!activeLocation) return;
+      form.setValue("level", activeLocation.level, { shouldValidate: true });
+      if (!image) return;
+      form.setValue("image", image.file, { shouldValidate: true });
+    }, [activeLocation, image]);
 
     useEffect(() => {
       form.setValue("lat", cords.lat);
       form.setValue("lng", cords.lng);
     }, [cords, setCords]);
 
+    const resetForm = () => {
+      setCords({ lat: 0, lng: 0 });
+      setImage(null);
+      form.reset;
+    };
+
     const handleLocationSubmit = async (
       values: z.infer<typeof locationSchema>,
     ) => {
       setIsLoading(true);
-      console.log(values);
       if (!values.image) {
         toast.error("No image provided", {
           description: "Pleas provide an image for this location.",
@@ -101,41 +129,97 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         return;
       }
 
-      const { data: bucket, error: bucketError } = await supabase.storage
-        .from("image_views")
-        .upload(
-          `${new Date().getTime()}-${kebabCase(values.image.name)}`,
-          values.image,
-        );
+      console.log(values);
 
-      if (bucketError) {
-        toast.error("Failed uploading image", {
-          description: "Error while uploading image pleas try again.",
-        });
-        setIsLoading(false);
-        return;
+      let bucket, location: PostgrestSingleResponse<LocationType[]>;
+
+      // Checks when update locations is submitted if there is a new image.
+      const isNewImage = image && values.image.name !== image.file.name;
+
+      // Delete old image if updating
+      if (isNewImage && activeLocation) {
+        const { error } = await supabase.storage
+          .from("image_views")
+          .remove([image.file.name]);
+
+        if (error) {
+          toast.error("Failed deleting locations old image", {
+            description: "This location is still using the old image.",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // only upload if there is a new image for update or insert a new location
+      if ((isNewImage && activeLocation) || !activeLocation) {
+        bucket = await supabase.storage
+          .from("image_views")
+          .upload(
+            `${new Date().getTime()}-${kebabCase(values.image.name)}`,
+            values.image,
+          );
+
+        if (bucket.error) {
+          toast.error("Failed uploading image", {
+            description: "Error while uploading image pleas try again.",
+          });
+          setIsLoading(false);
+          return;
+        }
       }
 
       const { lat, lng, level } = values;
 
-      const { data: location, error: locationError } = await supabase
-        .from("locations")
-        .insert({ lat, lng, image_path: bucket.path, level })
-        .select();
+      // Insert new location or update selected location
+      if (!activeLocation) {
+        location = await supabase
+          .from("locations")
+          .insert({ lat, lng, image_path: bucket?.data.path, level })
+          .select();
 
-      if (locationError) {
-        toast.error("Failed saving location", {
-          description: "Error while saving location, please try again.",
-        });
-        return;
+        if (location.error) {
+          toast.error("Failed saving location", {
+            description: "Error while saving location, please try again.",
+          });
+          return;
+        }
+
+        setLocations((prev) => [...prev, location.data![0]]);
+      } else {
+        const colsToUpdate = isNewImage
+          ? { lat, lng, image_path: bucket?.data.path, level }
+          : { lat, lng, level };
+
+        location = await supabase
+          .from("locations")
+          .update(colsToUpdate)
+          .eq("id", activeLocation.id)
+          .select();
+
+        if (location.error) {
+          toast.error("Failed saving location", {
+            description: "Error while saving location, please try again.",
+          });
+          return;
+        }
+
+        // Update locations state
+        setLocations((prev) =>
+          prev.map((prevLocation) => {
+            if (location.data && prevLocation.id === location.data[0].id) {
+              return location.data[0];
+            }
+
+            return prevLocation;
+          }),
+        );
+
+        setActiveLocation(null);
       }
 
-      setLocations((prev) => [...prev, location[0]]);
-      setCords({ lat: 0, lng: 0 });
-      setImage(null);
       setIsLoading(false);
-
-      form.reset;
+      resetForm();
     };
 
     const processFile = (file: File) => {
@@ -308,9 +392,9 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                   <FormLabel>Difficulty level</FormLabel>
                   <FormControl>
                     <RadioGroup
+                      name="level"
                       onValueChange={field.onChange}
-                      defaultValue={levels[0]}
-                      className="flex flex-wrap gap-6"
+                      value={field.value}
                     >
                       {levels.map((level) => (
                         <div key={level} className="flex items-center gap-2">
@@ -324,18 +408,85 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
               )}
             />
           </div>
-          <Button
-            type="submit"
-            variant="outline"
-            className="w-full select-none"
-            disabled={!form.formState.isValid}
-          >
-            {isLoading ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <span>Submit</span>
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full select-none"
+              disabled={!form.formState.isValid}
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <span>{activeLocation ? "Save" : "Submit"}</span>
+              )}
+            </Button>
+            {activeLocation && (
+              <>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      className="w-full select-none"
+                    >
+                      Cancel
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        All changes will be lost if canceled.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setActiveLocation(null);
+                          resetForm();
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      type="button"
+                      className="w-fit select-none"
+                    >
+                      <Trash2 size={20} />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This is a destructive action, the location will be
+                        deleted permanently from our database.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setActiveLocation(null);
+                          resetForm();
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
-          </Button>
+          </div>
         </form>
       </Form>
     );
