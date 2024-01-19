@@ -134,17 +134,18 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       let bucket, location: PostgrestSingleResponse<LocationType[]>;
 
       // Checks when update locations is submitted if there is a new image.
-      const isNewImage = image && values.image.name !== image.file.name;
+      const isNewImage =
+        activeLocation && values.image.name !== activeLocation.image_path;
 
       // Delete old image if updating
       if (isNewImage && activeLocation) {
         const { error } = await supabase.storage
           .from("image_views")
-          .remove([image.file.name]);
+          .remove([activeLocation.image_path]);
 
         if (error) {
-          toast.error("Failed deleting locations old image", {
-            description: "This location is still using the old image.",
+          toast.error("Failed to delete old image", {
+            description: "This location will still be using the old image.",
           });
           setIsLoading(false);
           return;
