@@ -88,6 +88,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
     ref,
   ) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const form = useForm<z.infer<typeof locationSchema>>({
       resolver: zodResolver(locationSchema),
@@ -269,6 +270,46 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       } else if (type === "dragleave") {
         setDragActive(false);
       }
+    };
+
+    const deleteLocation = async () => {
+      if (!activeLocation) return;
+      setIsDeleting(true);
+
+      let bucket, location;
+
+      bucket = await supabase.storage
+        .from("image_views")
+        .remove([activeLocation.image_path]);
+
+      if (bucket.error) {
+        toast.error("Error deleting location", {
+          description:
+            "Failed to remove image from database, please try again.",
+        });
+        return;
+      }
+
+      location = await supabase
+        .from("locations")
+        .delete()
+        .eq("id", activeLocation.id);
+
+      if (location.error) {
+        toast.error("Error deleting location", {
+          description:
+            "Failed to remove location from database, please try again.",
+        });
+        return;
+      }
+
+      setLocations((prev) =>
+        prev.filter((prevLocation) => prevLocation.id !== activeLocation.id),
+      );
+
+      setIsDeleting(false);
+      setActiveLocation(null);
+      resetForm();
     };
 
     return (
@@ -461,12 +502,16 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                       type="button"
                       className="w-fit select-none"
                     >
-                      <Trash2 size={20} />
+                      {isDeleting ? (
+                        <Loader2 size={20} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={20} />
+                      )}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogTitle>Delete location</AlertDialogTitle>
                       <AlertDialogDescription>
                         This is a destructive action, the location will be
                         deleted permanently from our database.
@@ -474,12 +519,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          setActiveLocation(null);
-                          resetForm();
-                        }}
-                      >
+                      <AlertDialogAction onClick={deleteLocation}>
                         Continue
                       </AlertDialogAction>
                     </AlertDialogFooter>
