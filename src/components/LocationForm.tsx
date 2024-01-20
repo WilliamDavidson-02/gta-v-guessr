@@ -437,6 +437,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                       name="level"
                       onValueChange={field.onChange}
                       value={field.value}
+                      className="flex gap-4"
                     >
                       {levels.map((level) => (
                         <div key={level} className="flex items-center gap-2">

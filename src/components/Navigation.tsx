@@ -10,11 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings } from "lucide-react";
-import { Skeleton } from "./ui/skeleton";
 import GithubIcon from "./GithubIcon";
 
 export default function Navigation() {
-  const { user, signOut, isLoading } = useUserContext();
+  const { user, signOut } = useUserContext();
 
   return (
     <nav className="flex w-full items-center justify-between py-6">
@@ -22,16 +21,13 @@ export default function Navigation() {
         <img className="w-12" src="/gta_v_icon.svg" alt="Gta v logo" />
       </Link>
       <div className="flex items-center gap-4">
-        <a
+        <GithubIcon
           title="WilliamDavidson-02"
           target="_blank"
           href="https://github.com/WilliamDavidson-02"
-        >
-          <GithubIcon className="h-8 w-8" />
-        </a>
-        {isLoading ? (
-          <Skeleton className="h-10 w-20 rounded-md" />
-        ) : !user ? (
+          className="h-8 w-8"
+        />
+        {!user ? (
           <Link to="/auth/login" reloadDocument>
             <Button>Login</Button>
           </Link>
