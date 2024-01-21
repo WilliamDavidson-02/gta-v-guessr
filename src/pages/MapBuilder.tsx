@@ -13,6 +13,11 @@ import supabase from "@/supabase/supabaseConfig";
 import { Suspense, useEffect, useState } from "react";
 import { Marker } from "react-leaflet";
 import { toast } from "sonner";
+import { GeoJSON } from "react-leaflet/GeoJSON";
+import seg from "@/lib/seg.json";
+import { FeatureCollection } from "geojson";
+
+const regions = seg as FeatureCollection;
 
 export type LatLng = {
   lat: number;
@@ -107,9 +112,23 @@ export default function MapBuilder() {
                   onResize={mapResize}
                   pinMap={pinMap}
                   setPinMap={setPinMap}
-                  showGeoAreas={showGeoAreas}
                 >
                   <>
+                    <GeoJSON
+                      data={regions}
+                      style={(feature) => {
+                        if (!showGeoAreas) {
+                          return { opacity: 0, fillOpacity: 0 };
+                        }
+                        return {
+                          weight: 2,
+                          color: feature?.properties.color,
+                          fillColor: feature?.properties.fillColor,
+                          opacity: 1,
+                          fillOpacity: 0.5,
+                        };
+                      }}
+                    />
                     {locations.map((location) => {
                       const { lat, lng } = location;
                       return (

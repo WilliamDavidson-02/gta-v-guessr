@@ -42,6 +42,15 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
+import { latLng, polygon } from "leaflet";
+import seg from "@/lib/seg.json";
+
+type AllowedRegions =
+  | "city"
+  | "sandy_shore"
+  | "grapeseed"
+  | "paleto_bay"
+  | null;
 
 type LocationFormProps = Cords & {
   image: ImageType | null;
@@ -118,6 +127,25 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       form.reset;
     };
 
+    const isInBounds = (): AllowedRegions => {
+      const markedLocation = latLng(cords.lat, cords.lng);
+
+      // Check if the marked location is with in a region from seg.json
+      for (let region of seg.features) {
+        const regionLatLngs = region.geometry.coordinates[0].map(([lng, lat]) =>
+          latLng(lat, lng),
+        );
+
+        const poly = polygon(regionLatLngs);
+        const bounds = poly.getBounds();
+
+        if (bounds.contains(markedLocation))
+          return region.properties.seg as AllowedRegions;
+      }
+
+      return null;
+    };
+
     const handleLocationSubmit = async (
       values: z.infer<typeof locationSchema>,
     ) => {
@@ -129,8 +157,6 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         setIsLoading(false);
         return;
       }
-
-      console.log(values);
 
       let bucket, location: PostgrestSingleResponse<LocationType[]>;
 
@@ -177,7 +203,13 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       if (!activeLocation) {
         location = await supabase
           .from("locations")
-          .insert({ lat, lng, image_path: bucket?.data.path, level })
+          .insert({
+            lat,
+            lng,
+            image_path: bucket?.data.path,
+            level,
+            region: isInBounds(),
+          })
           .select();
 
         if (location.error) {
@@ -190,8 +222,14 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         setLocations((prev) => [...prev, location.data![0]]);
       } else {
         const colsToUpdate = isNewImage
-          ? { lat, lng, image_path: bucket?.data.path, level }
-          : { lat, lng, level };
+          ? {
+              lat,
+              lng,
+              image_path: bucket?.data.path,
+              level,
+              region: isInBounds(),
+            }
+          : { lat, lng, level, region: isInBounds() };
 
         location = await supabase
           .from("locations")

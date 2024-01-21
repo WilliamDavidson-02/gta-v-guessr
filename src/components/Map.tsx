@@ -5,16 +5,11 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import { GeoJSON } from "react-leaflet/GeoJSON";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Dispatch, ReactNode, SetStateAction, useEffect } from "react";
 import { LatLng } from "@/pages/MapBuilder";
 import { cn } from "@/lib/utils";
-import seg from "@/lib/seg.json";
-import { FeatureCollection } from "geojson";
-
-const regions = seg as FeatureCollection;
 
 type OnResize = number | null;
 
@@ -33,7 +28,6 @@ type MapProps = Cords &
     className?: string;
     onResize?: OnResize;
     children?: ReactNode;
-    showGeoAreas?: boolean;
   };
 
 type LocationMarkerProps = Cords & PinMap;
@@ -105,7 +99,6 @@ export default function Map({
   pinMap,
   setPinMap,
   children,
-  showGeoAreas,
 }: MapProps) {
   return (
     <MapContainer
@@ -116,22 +109,6 @@ export default function Map({
       bounds={bounds}
       style={{ height: "100%", width: "100%" }}
     >
-      <GeoJSON
-        data={regions}
-        style={(feature) => {
-          if (!showGeoAreas) return { opacity: 0, fillOpacity: 0 };
-          return {
-            weight: 2,
-            color: feature?.properties.color,
-            fillColor: feature?.properties.fillColor,
-            opacity: 1,
-            fillOpacity: 0.5,
-          };
-        }}
-        eventHandlers={{
-          click: (ev) => console.log(ev),
-        }}
-      />
       <MapTileLayer onResize={onResize} />
       <LocationMarker
         cords={cords}
