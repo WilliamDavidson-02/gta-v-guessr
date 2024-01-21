@@ -1,4 +1,4 @@
-import { HTMLAttributes, Suspense, useState } from "react";
+import { HTMLAttributes, Suspense, useRef, useState } from "react";
 import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import TextLg from "./TextLg";
@@ -8,14 +8,17 @@ type GameTypeCardProps = HTMLAttributes<HTMLDivElement> & {
   bgUrl: string;
   gameType: string;
   description?: string;
+  onClick: () => void;
 };
 
 export default function GameTypeCard({
   bgUrl,
   gameType,
   description,
+  onClick,
 }: GameTypeCardProps) {
   const [isPlayFocus, setIsPlayFocus] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <Suspense fallback={<Skeleton />}>
@@ -37,9 +40,14 @@ export default function GameTypeCard({
             </p>
           </div>
           <Button
+            ref={btnRef}
+            onClick={() => {
+              onClick(); // parent function.
+              btnRef.current?.blur();
+            }}
             onFocus={() => setIsPlayFocus(true)}
             onBlur={() => setIsPlayFocus(false)}
-            className="self-end text-xl font-semibold opacity-0 transition duration-300 focus:opacity-100 group-hover:opacity-100"
+            className="self-end p-0 text-xl font-semibold opacity-0 transition duration-300 focus:opacity-100 group-hover:opacity-100"
           >
             Play
           </Button>

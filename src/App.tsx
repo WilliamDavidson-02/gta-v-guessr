@@ -11,6 +11,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Guessr = lazy(() => import("./pages/Guessr"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Multiplayer = lazy(() => import("./pages/Multiplayer"));
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/auth/:form" element={<Auth />} />
           <Route element={<PrivateRoutes />}>
             <Route path="/guessr" element={<Guessr />} />
+            <Route path="/multiplayer" element={<Multiplayer />} />
           </Route>
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />}>

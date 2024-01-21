@@ -62,7 +62,7 @@ export default function Navigation() {
               <DropdownMenuItem className="cursor-pointer">
                 Single player
               </DropdownMenuItem>
-              <DropdownMenuItem disabled className="cursor-pointer">
+              <DropdownMenuItem className="cursor-pointer">
                 Multiplayer
               </DropdownMenuItem>
               <DropdownMenuSeparator />

@@ -54,7 +54,7 @@ type LocationFormProps = Cords & {
   setLocations: Dispatch<SetStateAction<LocationType[]>>;
 };
 
-const levels: [string, ...string[]] = ["easy", "medium", "hard"];
+export const levels: [string, ...string[]] = ["easy", "medium", "hard"];
 const acceptedFiles = "image/jpeg, image/jpg, image/png";
 
 const locationSchema = z.object({
@@ -394,11 +394,20 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
               <FormField
                 control={form.control}
                 name="lat"
-                render={({ field }) => (
+                render={({ field: { onChange, ...rest } }) => (
                   <FormItem className="col-span-2 sm:col-span-1">
                     <FormLabel>Latitude</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        onChange={(ev) => {
+                          const latNum = parseFloat(ev.target.value);
+                          setCords((prev) => ({
+                            ...prev,
+                            lat: !isNaN(latNum) ? latNum : prev.lat,
+                          }));
+                        }}
+                        {...rest}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -407,11 +416,20 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
               <FormField
                 control={form.control}
                 name="lng"
-                render={({ field }) => (
+                render={({ field: { onChange, ...rest } }) => (
                   <FormItem className="col-span-2 sm:col-span-1">
                     <FormLabel>Longitude</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        onChange={(ev) => {
+                          const lngNum = parseFloat(ev.target.value);
+                          setCords((prev) => ({
+                            ...prev,
+                            lng: !isNaN(lngNum) ? lngNum : prev.lng,
+                          }));
+                        }}
+                        {...rest}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,11 +1,13 @@
 import { LocationForm } from "@/components/LocationForm";
 import Map from "@/components/Map";
+import { Label } from "@/components/ui/label";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { createFileBlobFromUrl } from "@/lib/utils";
 import supabase from "@/supabase/supabaseConfig";
 import { Suspense, useEffect, useState } from "react";
@@ -39,6 +41,7 @@ export default function MapBuilder() {
   const [activeLocation, setActiveLocation] = useState<LocationType | null>(
     null,
   );
+  const [showGeoAreas, setShowGeoAreas] = useState(true);
 
   useEffect(() => {
     const getMarkedLocation = async () => {
@@ -89,32 +92,43 @@ export default function MapBuilder() {
             <Suspense
               fallback={<Skeleton className="h-full w-full rounded-none" />}
             >
-              <Map
-                cords={cords}
-                setCords={setCords}
-                onResize={mapResize}
-                pinMap={pinMap}
-                setPinMap={setPinMap}
-              >
-                <>
-                  {locations.map((location) => {
-                    const { lat, lng } = location;
-                    return (
-                      <Marker
-                        key={location.id}
-                        position={{ lat, lng }}
-                        eventHandlers={{
-                          click: () => {
-                            setActiveLocation(location);
-                            setCords({ lat, lng });
-                            getImageFile(location.image_path);
-                          },
-                        }}
-                      />
-                    );
-                  })}
-                </>
-              </Map>
+              <div className="relative h-full w-full">
+                <div className="absolute right-3 top-3 z-20 flex items-center justify-center gap-4 rounded-md border border-border bg-background p-2">
+                  <Label htmlFor="show-areas">Toggle regions</Label>
+                  <Switch
+                    id="show-areas"
+                    defaultChecked={showGeoAreas}
+                    onCheckedChange={(check) => setShowGeoAreas(check)}
+                  />
+                </div>
+                <Map
+                  cords={cords}
+                  setCords={setCords}
+                  onResize={mapResize}
+                  pinMap={pinMap}
+                  setPinMap={setPinMap}
+                  showGeoAreas={showGeoAreas}
+                >
+                  <>
+                    {locations.map((location) => {
+                      const { lat, lng } = location;
+                      return (
+                        <Marker
+                          key={location.id}
+                          position={{ lat, lng }}
+                          eventHandlers={{
+                            click: () => {
+                              setActiveLocation(location);
+                              setCords({ lat, lng });
+                              getImageFile(location.image_path);
+                            },
+                          }}
+                        />
+                      );
+                    })}
+                  </>
+                </Map>
+              </div>
             </Suspense>
           </ResizablePanel>
         </ResizablePanelGroup>
