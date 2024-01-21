@@ -45,7 +45,7 @@ import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { latLng, polygon } from "leaflet";
 import seg from "@/lib/seg.json";
 
-type AllowedRegions =
+export type AllowedRegions =
   | "city"
   | "sandy_shore"
   | "grapeseed"

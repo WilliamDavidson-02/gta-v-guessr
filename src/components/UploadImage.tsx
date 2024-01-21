@@ -6,15 +6,18 @@ type ImageProps = {
   className?: string | undefined;
   src: string;
   alt?: string;
+  skeletonClass?: string;
 };
 
 const UploadImage = forwardRef<HTMLImageElement, ImageProps>(
-  ({ className, src, alt = "", ...props }, ref) => {
+  ({ className, src, alt = "", skeletonClass, ...props }, ref) => {
     const [isLoading, setIsLoading] = useState(true);
 
     return (
       <>
-        {isLoading && <Skeleton className="h-full w-full" />}
+        {isLoading && (
+          <Skeleton className={cn("aspect-video w-full", skeletonClass)} />
+        )}
         <img
           {...props}
           ref={ref}

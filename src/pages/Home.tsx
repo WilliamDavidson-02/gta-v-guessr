@@ -35,11 +35,11 @@ export default function Home() {
       {showGameCreation && (
         <div
           onClick={() => setShowGameCreation(false)}
-          className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/30 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/30 p-6 backdrop-blur-sm"
         >
           <div
             onClick={(ev) => ev.stopPropagation()}
-            className="rounded-md border border-border bg-background p-4"
+            className="mx-auto max-w-[1440px] rounded-md border border-border bg-background p-4"
           >
             <GameCreation />
           </div>
