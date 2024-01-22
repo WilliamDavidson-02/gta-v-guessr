@@ -2,8 +2,13 @@ import { AllowedRegions, levels } from "./LocationForm";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import seg from "@/lib/seg.json";
-import { Carousel, CarouselContent, CarouselItem } from "./ui/carousel";
-import { useState } from "react";
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from "./ui/carousel";
+import { useEffect, useState } from "react";
 import RegionCard from "./RegionCard";
 import { cn } from "@/lib/utils";
 
@@ -11,10 +16,30 @@ const regions = seg.features.map((region) => region.properties.seg);
 
 export default function GameCreation() {
   const [selectedRegion, setSelectedRegion] = useState<AllowedRegions>(null);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+
+    const setCarouselApi = () => {
+      setCount(api.scrollSnapList().length);
+      setCurrent(api.selectedScrollSnap() + 1);
+    };
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+
+    api.on("resize", setCarouselApi);
+
+    setCarouselApi();
+  }, [api]);
 
   return (
     <form className="flex w-full flex-col gap-4">
-      <Carousel opts={{ align: "start" }}>
+      <Carousel setApi={setApi} opts={{ align: "start" }}>
         <CarouselContent>
           <CarouselItem className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
             <RegionCard
@@ -31,7 +56,7 @@ export default function GameCreation() {
             >
               <RegionCard
                 bgUrl={`/thumbnails/${region}.jpg`}
-                region={region.split("_").join(" ")}
+                region={region.replace("_", " ")}
                 className={cn({ "border-primary": region === selectedRegion })}
                 onClick={() => setSelectedRegion(region as AllowedRegions)}
               />
@@ -39,6 +64,17 @@ export default function GameCreation() {
           ))}
         </CarouselContent>
       </Carousel>
+      <div className="mx-auto flex gap-2">
+        {Array.from({ length: count }).map((_, index) => (
+          <div
+            onClick={() => api?.scrollTo(index)}
+            key={index}
+            className={cn("h-2.5 w-2.5 rounded-full bg-secondary", {
+              "bg-primary": index + 1 === current,
+            })}
+          />
+        ))}
+      </div>
       <RadioGroup
         onValueChange={() => {}}
         defaultValue={levels[0]}

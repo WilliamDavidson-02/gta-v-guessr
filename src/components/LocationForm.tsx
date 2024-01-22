@@ -496,10 +496,15 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                       className="flex gap-4"
                     >
                       {levels.map((level) => (
-                        <div key={level} className="flex items-center gap-2">
-                          <RadioGroupItem id={level} value={level} />
-                          <Label htmlFor={level}>{level}</Label>
-                        </div>
+                        <FormItem
+                          key={level}
+                          className="flex items-center gap-2"
+                        >
+                          <FormControl>
+                            <RadioGroupItem value={level} />
+                          </FormControl>
+                          <FormLabel>{level}</FormLabel>
+                        </FormItem>
                       ))}
                     </RadioGroup>
                   </FormControl>
