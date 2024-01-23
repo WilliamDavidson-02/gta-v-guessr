@@ -39,7 +39,7 @@ export default function Home() {
         >
           <div
             onClick={(ev) => ev.stopPropagation()}
-            className="mx-auto max-w-[1440px] rounded-md border border-border bg-background p-4"
+            className="mx-auto w-full max-w-[1440px] rounded-md border border-border bg-background p-4"
           >
             <GameCreation />
           </div>
