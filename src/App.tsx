@@ -21,8 +21,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/auth/:form" element={<Auth />} />
           <Route element={<PrivateRoutes />}>
-            <Route path="/guessr" element={<Guessr />} />
-            <Route path="/multiplayer" element={<Multiplayer />} />
+            <Route path="/guessr/:id?" element={<Guessr />} />
+            <Route path="/multiplayer/:id?" element={<Multiplayer />} />
           </Route>
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />}>

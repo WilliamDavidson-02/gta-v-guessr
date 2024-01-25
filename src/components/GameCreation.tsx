@@ -18,11 +18,14 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import supabase from "@/supabase/supabaseConfig";
+import { toast } from "sonner";
 import { Input } from "./ui/input";
+import { z } from "zod";
 
-type Levels = "easy" | "medium" | "hard";
+export type Levels = "easy" | "medium" | "hard";
 
 type GameConfig = {
   region: AllowedRegions;
@@ -31,16 +34,21 @@ type GameConfig = {
 
 const regions = seg.features.map((region) => region.properties.seg);
 
+const gameNameSchema = z.string().min(2);
+
 export default function GameCreation() {
-  const pathname = useLocation().pathname.split("/")[1]; // remove "/" from the pathname
+  const isMultiplayer = useLocation().pathname.split("/")[1] === "multiplayer"; // remove "/" from the pathname
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
-  const [password, setPassword] = useState("");
+  const [gameName, setGameName] = useState("");
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     level: levels[0] as Levels,
     region: null,
   });
+  const [isNameValid, setIsNameValid] = useState(false); // Only for multiplayer
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!api) return;
@@ -59,10 +67,38 @@ export default function GameCreation() {
     setCarouselApi();
   }, [api]);
 
-  const handleSubmit = (ev: FormEvent) => {
+  useEffect(() => {
+    validateName();
+  }, [gameName, setGameName]);
+
+  const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
 
-    console.log({ password, ...gameConfig });
+    const { data, error } = await supabase
+      .from("games")
+      .insert({
+        ...gameConfig,
+        is_multiplayer: isMultiplayer,
+        started_at: !isMultiplayer ? new Date().toISOString() : null,
+        name: gameName,
+      })
+      .select("id");
+
+    if (error) {
+      toast.error("Failed to create new game");
+      return;
+    }
+
+    navigate(isMultiplayer ? data[0].id : `/guessr/${data[0].id}`);
+  };
+
+  const validateName = () => {
+    if (gameNameSchema.safeParse(gameName).success) {
+      setIsNameValid(true);
+      return;
+    }
+
+    setIsNameValid(false);
   };
 
   return (
@@ -115,11 +151,11 @@ export default function GameCreation() {
         </div>
       </div>
       <div
-        className={cn("grid grid-cols-1 gap-2 lg:grid-cols-2", {
-          "lg:grid-cols-3": pathname !== "multiplayer",
+        className={cn("mx-auto w-full max-w-[500px]", {
+          "grid max-w-none gap-4 md:grid-cols-2": isMultiplayer,
         })}
       >
-        <Card className={cn({ "lg:col-start-2": pathname !== "multiplayer" })}>
+        <Card>
           <CardHeader>
             <CardTitle>Select a difficulty level</CardTitle>
             <CardDescription>
@@ -146,51 +182,40 @@ export default function GameCreation() {
             </RadioGroup>
           </CardContent>
         </Card>
-        {pathname === "multiplayer" && (
+        {isMultiplayer && (
           <Card>
             <CardHeader>
               <CardTitle>
                 <Label
                   className="text-2xl font-semibold leading-none tracking-tight"
-                  htmlFor="password"
+                  htmlFor="name"
                 >
-                  Password
+                  Game name
                 </Label>
               </CardTitle>
               <CardDescription>
-                Others will be required to enter the password before joining
-                your game.{" "}
-                <strong>If left empty no password will be required.</strong>
+                Name your game so others can uniquely identify your game.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
-                value={password}
-                onChange={(ev) => setPassword(ev.target.value)}
-                id="password"
-                type="password"
+                value={gameName}
+                onChange={(ev) => setGameName(ev.target.value)}
+                id="name"
+                name="name"
+                autoComplete="off"
               />
             </CardContent>
           </Card>
         )}
       </div>
-      <div
-        className={cn("grid grid-cols-1 gap-2 lg:grid-cols-2", {
-          "lg:grid-cols-3": pathname !== "multiplayer",
-        })}
+      <Button
+        disabled={isMultiplayer && !isNameValid}
+        className="mx-auto w-full max-w-[500px]"
+        type="submit"
       >
-        <Button
-          type="submit"
-          className={cn({ "lg:col-start-2": pathname !== "multiplayer" })}
-        >
-          {pathname !== "multiplayer" ? "Start game" : "Create game"}
-        </Button>
-        {pathname === "multiplayer" && (
-          <Button type="button" variant="outline">
-            Join game
-          </Button>
-        )}
-      </div>
+        {!isMultiplayer ? "Start game" : "Create game"}
+      </Button>
     </form>
   );
 }
