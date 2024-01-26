@@ -44,7 +44,7 @@ export default function GameCreation() {
   const [gameName, setGameName] = useState("");
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     level: levels[0] as Levels,
-    region: null,
+    region: "all",
   });
   const [isNameValid, setIsNameValid] = useState(false); // Only for multiplayer
 
@@ -110,9 +110,11 @@ export default function GameCreation() {
               <RegionCard
                 bgUrl="/satellite/0/0/0.png"
                 region="All"
-                className={cn({ "border-primary": !gameConfig.region })}
+                className={cn({
+                  "border-primary": gameConfig.region === "all",
+                })}
                 onClick={() =>
-                  setGameConfig((prev) => ({ ...prev, region: null }))
+                  setGameConfig((prev) => ({ ...prev, region: "all" }))
                 }
               />
             </CarouselItem>

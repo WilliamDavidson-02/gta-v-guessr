@@ -49,7 +49,7 @@ export type AllowedRegions =
   | "sandy_shore"
   | "grapeseed"
   | "paleto_bay"
-  | null;
+  | "all";
 
 type LocationFormProps = Cords & {
   image: ImageType | null;
@@ -142,7 +142,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
           return region.properties.seg as AllowedRegions;
       }
 
-      return null;
+      return "all";
     };
 
     const handleLocationSubmit = async (
