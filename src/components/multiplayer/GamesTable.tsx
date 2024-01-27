@@ -27,6 +27,10 @@ export default function GamesTable() {
   }, []);
 
   useEffect(() => {
+    getGames();
+  }, [searchParams]);
+
+  const calcRange = () => {
     let page = parseInt(searchParams.get("page") ?? "0");
 
     if (page < 0 || isNaN(page)) {
@@ -37,8 +41,17 @@ export default function GamesTable() {
     const from = page * 10;
     const to = from + 9;
 
-    getGames(from, to);
-  }, [searchParams]);
+    return { from, to };
+  };
+
+  const changes = supabase
+    .channel("games-list-channel")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "games" },
+      () => getGames(),
+    )
+    .subscribe();
 
   const getGameCount = async () => {
     const { count, error } = await supabase
@@ -59,14 +72,16 @@ export default function GamesTable() {
     setGameCount(Math.ceil(count / 10));
   };
 
-  const getGames = async (from: number, to: number) => {
+  const getGames = async () => {
+    const range = calcRange();
+
     const { data, error } = await supabase
       .from("games")
       .select("id, created_at, level, region, name")
       .eq("is_multiplayer", true)
       .is("started_at", null)
       .order("created_at", { ascending: false })
-      .range(from, to);
+      .range(range.from, range.to);
 
     if (error) {
       toast.error("Failed to get games", {
