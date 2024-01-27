@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { DataTable } from "../DataTable";
 import { columns } from "./Columns";
 import { useSearchParams } from "react-router-dom";
+import usePaginationSearchParam from "@/hooks/usePaginationSearchParam";
 
 export type Games = {
   id: string;
@@ -19,13 +20,19 @@ export default function GamesTable() {
   const [games, setGames] = useState<Games[]>([]);
   const [gameCount, setGameCount] = useState(0);
   const [searchParams] = useSearchParams();
+  const setNewPagination = usePaginationSearchParam();
 
   useEffect(() => {
     getGameCount();
   }, []);
 
   useEffect(() => {
-    const page = parseInt(searchParams.get("page") ?? "0");
+    let page = parseInt(searchParams.get("page") ?? "0");
+
+    if (page < 0 || isNaN(page)) {
+      page = 0;
+      setNewPagination("page", page);
+    }
 
     const from = page * 10;
     const to = from + 9;

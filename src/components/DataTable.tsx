@@ -16,7 +16,7 @@ import {
 import { Button } from "./ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
+import usePaginationSearchParam from "@/hooks/usePaginationSearchParam";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -36,19 +36,9 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page") ?? "0");
-
-  useEffect(() => {
-    if (searchParams.get("page")) return;
-    setSearchParams({ page: String(0) });
-  }, []);
-
-  const handleParamsPagination = (direction: 1 | -1) => {
-    let currentPage = parseInt(searchParams.get("page") ?? "0");
-
-    setSearchParams({ page: String(currentPage + direction) });
-  };
+  const setNewPagination = usePaginationSearchParam();
 
   return (
     <div className="flex flex-col gap-2">
@@ -108,7 +98,7 @@ export function DataTable<TData, TValue>({
           size="sm"
           onClick={() => {
             table.previousPage();
-            handleParamsPagination(-1);
+            setNewPagination("page", page - 1);
           }}
           disabled={page <= 0}
         >
@@ -119,7 +109,7 @@ export function DataTable<TData, TValue>({
           size="sm"
           onClick={() => {
             table.nextPage();
-            handleParamsPagination(1);
+            setNewPagination("page", page + 1);
           }}
           disabled={page >= length - 1}
         >
