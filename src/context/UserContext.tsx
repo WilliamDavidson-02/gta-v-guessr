@@ -35,33 +35,65 @@ export default function UserContextProvider({
   const isGettingUser = useRef(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  const getUserProfileData = async (id: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, avatar_url, theme, access_role")
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Failed to get profile data", {
+        description:
+          "Error while getting additional user meta data, please try again.",
+      });
+    }
+
+    return { user_metadata: data![0], profileError: error };
+  };
+
   const getUser = async () => {
     if (isGettingUser.current) return;
     isGettingUser.current = true;
+
+    const setErrors = () => {
+      isGettingUser.current = false;
+      setIsLoading(false);
+    };
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
     if (!session) {
-      isGettingUser.current = false;
-      setIsLoading(false);
+      setErrors();
       return;
     }
 
     const { data, error } = await supabase.auth.getUser();
 
     if (error) {
-      isGettingUser.current = false;
-      setIsLoading(false);
+      setErrors();
       return;
     }
+
+    const { user_metadata, profileError } = await getUserProfileData(
+      data.user.id,
+    );
+
+    if (profileError) {
+      setErrors();
+      return;
+    }
+
+    data.user.user_metadata = user_metadata;
+
     setUser(data.user);
     setIsLoading(false);
   };
-
-  useEffect(() => {
-    getUser();
-  }, []);
 
   const signInWithPassword = async (credentials: SignInCredentials) => {
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
@@ -70,6 +102,15 @@ export default function UserContextProvider({
       toast.error("Failed Login: Invalid credentials.");
       return;
     }
+
+    const { user_metadata, profileError } = await getUserProfileData(
+      data.user.id,
+    );
+
+    if (profileError) return;
+
+    data.user.user_metadata = user_metadata;
+
     setUser(data.user);
     navigate("/");
   };
@@ -80,7 +121,7 @@ export default function UserContextProvider({
       email,
       password,
       options: {
-        data: { username, theme: "dark", access_role: "guessr" },
+        data: { username },
       },
     });
     if (error) {

@@ -7,6 +7,7 @@ import { DataTable } from "../DataTable";
 import { columns } from "./Columns";
 import { useSearchParams } from "react-router-dom";
 import usePaginationSearchParam from "@/hooks/usePaginationSearchParam";
+import { REALTIME_LISTEN_TYPES } from "@supabase/supabase-js";
 
 export type Games = {
   id: string;
@@ -14,6 +15,7 @@ export type Games = {
   level: Levels;
   region: AllowedRegions;
   name: string;
+  password: string;
 };
 
 export default function GamesTable() {
@@ -24,6 +26,24 @@ export default function GamesTable() {
 
   useEffect(() => {
     getGameCount();
+
+    const changes = supabase
+      .channel("games-list-channel")
+      .on(
+        REALTIME_LISTEN_TYPES.POSTGRES_CHANGES,
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+          filter: `is_multiplayer=eq.${true}`,
+        },
+        () => getGames(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(changes);
+    };
   }, []);
 
   useEffect(() => {
@@ -44,15 +64,6 @@ export default function GamesTable() {
     return { from, to };
   };
 
-  const changes = supabase
-    .channel("games-list-channel")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "games" },
-      () => getGames(),
-    )
-    .subscribe();
-
   const getGameCount = async () => {
     const { count, error } = await supabase
       .from("games")
@@ -61,7 +72,7 @@ export default function GamesTable() {
       .is("started_at", null)
       .order("created_at", { ascending: false });
 
-    if (error || !count) {
+    if (error) {
       toast.error("Error counting games", {
         description:
           "Failed to get the number of games, please reload the page.",
@@ -69,7 +80,7 @@ export default function GamesTable() {
       return;
     }
 
-    setGameCount(Math.ceil(count / 10));
+    setGameCount(Math.ceil(count! / 10));
   };
 
   const getGames = async () => {
@@ -77,7 +88,7 @@ export default function GamesTable() {
 
     const { data, error } = await supabase
       .from("games")
-      .select("id, created_at, level, region, name")
+      .select("id, created_at, level, region, name, password")
       .eq("is_multiplayer", true)
       .is("started_at", null)
       .order("created_at", { ascending: false })

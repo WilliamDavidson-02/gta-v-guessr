@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
@@ -24,6 +25,7 @@ import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
 import { Input } from "./ui/input";
 import { z } from "zod";
+import axios from "../axiosConfig";
 
 export type Levels = "easy" | "medium" | "hard";
 
@@ -34,7 +36,10 @@ type GameConfig = {
 
 const regions = seg.features.map((region) => region.properties.seg);
 
-const gameNameSchema = z.string().min(2);
+const multiplayerSchema = z.object({
+  name: z.string().min(2),
+  password: z.string(),
+});
 
 export default function GameCreation() {
   const isMultiplayer = useLocation().pathname.split("/")[1] === "multiplayer"; // remove "/" from the pathname
@@ -42,11 +47,12 @@ export default function GameCreation() {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
   const [gameName, setGameName] = useState("");
+  const [password, setPassword] = useState("");
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     level: levels[0] as Levels,
     region: "all",
   });
-  const [isNameValid, setIsNameValid] = useState(false); // Only for multiplayer
+  const [isFormValid, setIsFormValid] = useState(false); // Only for multiplayer
 
   const navigate = useNavigate();
 
@@ -68,11 +74,31 @@ export default function GameCreation() {
   }, [api]);
 
   useEffect(() => {
-    validateName();
-  }, [gameName, setGameName]);
+    if (!isMultiplayer) return;
+
+    setIsFormValid(
+      multiplayerSchema.safeParse({ name: gameName, password }).success,
+    );
+  }, [gameName, setGameName, password, setPassword]);
 
   const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
+
+    let submittedPassword = password;
+
+    // Hash password
+    if (isMultiplayer && password.length > 0) {
+      try {
+        const response = await axios.post("/hash", { password });
+        submittedPassword = response.data.password;
+      } catch (error) {
+        toast.error("Failed to create new game", {
+          description:
+            "There was an error while handling your password please try creating a new game",
+        });
+        return;
+      }
+    }
 
     const { data, error } = await supabase
       .from("games")
@@ -81,6 +107,7 @@ export default function GameCreation() {
         is_multiplayer: isMultiplayer,
         started_at: !isMultiplayer ? new Date().toISOString() : null,
         name: gameName,
+        password: submittedPassword,
       })
       .select("id");
 
@@ -90,15 +117,6 @@ export default function GameCreation() {
     }
 
     navigate(isMultiplayer ? data[0].id : `/guessr/${data[0].id}`);
-  };
-
-  const validateName = () => {
-    if (gameNameSchema.safeParse(gameName).success) {
-      setIsNameValid(true);
-      return;
-    }
-
-    setIsNameValid(false);
   };
 
   return (
@@ -157,67 +175,86 @@ export default function GameCreation() {
           "grid max-w-none gap-4 md:grid-cols-2": isMultiplayer,
         })}
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>Select a difficulty level</CardTitle>
-            <CardDescription>
-              The level effects picture, time limit and point scoring
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              onValueChange={(level) =>
-                setGameConfig((prev) => ({ ...prev, level: level as Levels }))
-              }
-              defaultValue={gameConfig.level}
-              className="flex gap-4"
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader>
+              <CardTitle>Select a difficulty level</CardTitle>
+              <CardDescription>
+                The level effects picture, time limit and point scoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                onValueChange={(level) =>
+                  setGameConfig((prev) => ({ ...prev, level: level as Levels }))
+                }
+                defaultValue={gameConfig.level}
+                className="flex gap-4"
+              >
+                {levels.map((level) => (
+                  <div
+                    key={level}
+                    className="flex select-none items-center gap-2"
+                  >
+                    <RadioGroupItem id={level} value={level} />
+                    <Label htmlFor={level}>{level}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </CardContent>
+          </div>
+          <CardFooter>
+            <Button
+              disabled={isMultiplayer && !isFormValid}
+              className="w-full"
+              type="submit"
             >
-              {levels.map((level) => (
-                <div
-                  key={level}
-                  className="flex select-none items-center gap-2"
-                >
-                  <RadioGroupItem id={level} value={level} />
-                  <Label htmlFor={level}>{level}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </CardContent>
+              {!isMultiplayer ? "Start game" : "Create game"}
+            </Button>
+          </CardFooter>
         </Card>
         {isMultiplayer && (
           <Card>
             <CardHeader>
-              <CardTitle>
-                <Label
-                  className="text-2xl font-semibold leading-none tracking-tight"
-                  htmlFor="name"
-                >
-                  Game name
-                </Label>
-              </CardTitle>
               <CardDescription>
-                Name your game so others can uniquely identify your game.
+                Name your game so others can identify the game and make it only
+                accessible for people that knows the password.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Input
-                value={gameName}
-                onChange={(ev) => setGameName(ev.target.value)}
-                id="name"
-                name="name"
-                autoComplete="off"
-              />
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label className="pl-2" htmlFor="name">
+                  Game name
+                </Label>
+                <Input
+                  value={gameName}
+                  onChange={(ev) => setGameName(ev.target.value)}
+                  id="name"
+                  name="name"
+                  autoComplete="off"
+                  placeholder="Name"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="pl-2" htmlFor="password">
+                  <span>Password</span>
+                  <strong className="ml-2 text-xs text-secondary">
+                    (Optional)
+                  </strong>
+                </Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(ev) => setPassword(ev.target.value)}
+                  id="password"
+                  name="password"
+                  placeholder="Password"
+                />
+              </div>
             </CardContent>
           </Card>
         )}
       </div>
-      <Button
-        disabled={isMultiplayer && !isNameValid}
-        className="mx-auto w-full max-w-[500px]"
-        type="submit"
-      >
-        {!isMultiplayer ? "Start game" : "Create game"}
-      </Button>
     </form>
   );
 }

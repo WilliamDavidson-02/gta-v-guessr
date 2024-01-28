@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import Navigation from "@/components/Navigation";
 import { useParams } from "react-router-dom";
 import GamesTable from "@/components/multiplayer/GamesTable";
+import GameLobby from "@/components/multiplayer/GameLobby";
 
 export default function Multiplayer() {
   const { id } = useParams();
@@ -12,9 +13,7 @@ export default function Multiplayer() {
       <Navigation />
       <section className="flex h-[calc(100vh-96px)] flex-col gap-20">
         {id ? (
-          <div>
-            <h1>Lobby</h1>
-          </div>
+          <GameLobby />
         ) : (
           <>
             <GameCreation />
