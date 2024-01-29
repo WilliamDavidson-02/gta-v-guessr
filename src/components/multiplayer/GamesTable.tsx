@@ -16,10 +16,12 @@ export type Games = {
   region: AllowedRegions;
   name: string;
   password: string;
+  count: number;
 };
 
 export default function GamesTable() {
   const [games, setGames] = useState<Games[]>([]);
+  const [gameIds, setGameIds] = useState<string[]>([]);
   const [gameCount, setGameCount] = useState(0);
   const [searchParams] = useSearchParams();
   const setNewPagination = usePaginationSearchParam();
@@ -39,6 +41,16 @@ export default function GamesTable() {
         },
         () => getGames(),
       )
+      .on(
+        REALTIME_LISTEN_TYPES.POSTGRES_CHANGES,
+        {
+          event: "*",
+          schema: "public",
+          table: "user_game",
+          filter: `game_id=in.(${gameIds.join(", ")})`,
+        },
+        (payload) => console.log(payload),
+      )
       .subscribe();
 
     return () => {
@@ -49,6 +61,21 @@ export default function GamesTable() {
   useEffect(() => {
     getGames();
   }, [searchParams]);
+
+  const getPlayerCounts = async (
+    gameIds: string[],
+  ): Promise<{ game_id: string; player_count: number }[]> => {
+    const { data, error } = await supabase.rpc("get_player_counts", {
+      game_ids: gameIds,
+    });
+
+    if (error) {
+      toast.error("Error fetching player counts");
+      return [];
+    }
+
+    return data;
+  };
 
   const calcRange = () => {
     let page = parseInt(searchParams.get("page") ?? "0");
@@ -102,7 +129,19 @@ export default function GamesTable() {
       return;
     }
 
-    setGames(data);
+    const gameIdsMap: string[] = data.map((game) => game.id);
+
+    const playerCounts = await getPlayerCounts(gameIdsMap);
+
+    setGameIds(gameIdsMap); // for realtime changes
+    setGames(
+      data.map((game) => ({
+        ...game,
+        count:
+          playerCounts.find((count) => count.game_id === game.id)
+            ?.player_count || 0,
+      })),
+    );
   };
 
   return (

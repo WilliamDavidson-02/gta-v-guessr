@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
@@ -17,6 +16,8 @@ import axios from "../../axiosConfig";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import supabase from "@/supabase/supabaseConfig";
+import useUserContext from "@/hooks/useUserContext";
 
 export const columns: ColumnDef<Games>[] = [
   {
@@ -37,6 +38,13 @@ export const columns: ColumnDef<Games>[] = [
     },
   },
   {
+    accessorKey: "count",
+    header: () => <div className="text-center">Players</div>,
+    cell: ({ row }) => (
+      <div className="text-center">{row.getValue("count") as string}</div>
+    ),
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const game = row.original;
@@ -47,6 +55,7 @@ export const columns: ColumnDef<Games>[] = [
       });
       const [isLoading, setIsLoading] = useState(false);
       const navigate = useNavigate();
+      const { user } = useUserContext();
 
       const handleSubmit = async (ev: FormEvent) => {
         ev.preventDefault();
@@ -66,6 +75,19 @@ export const columns: ColumnDef<Games>[] = [
           setIsLoading(false);
 
           if (response.data.isValid) {
+            const { error } = await supabase.from("user_game").upsert({
+              user_id: user?.id,
+              game_id: game.id,
+              joined_at: new Date(),
+            });
+
+            if (error) {
+              toast.error("Error joining game", {
+                description: "Please try rejoining again.",
+              });
+              return;
+            }
+
             navigate(game.id);
           }
         } catch (error) {
@@ -82,7 +104,11 @@ export const columns: ColumnDef<Games>[] = [
         <div className="flex justify-end">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="secondary" type="button">
+              <Button
+                disabled={game.count >= 2}
+                variant="secondary"
+                type="button"
+              >
                 Join
               </Button>
             </DialogTrigger>
