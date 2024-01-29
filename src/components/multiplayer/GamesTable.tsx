@@ -16,7 +16,7 @@ export type Games = {
   region: AllowedRegions;
   name: string;
   password: string;
-  count: number;
+  users: string[];
 };
 
 export default function GamesTable() {
@@ -62,10 +62,10 @@ export default function GamesTable() {
     getGames();
   }, [searchParams]);
 
-  const getPlayerCounts = async (
+  const getPlayersInGames = async (
     gameIds: string[],
-  ): Promise<{ game_id: string; player_count: number }[]> => {
-    const { data, error } = await supabase.rpc("get_player_counts", {
+  ): Promise<{ game_id: string; user_ids: string[] }[]> => {
+    const { data, error } = await supabase.rpc("get_player_users", {
       game_ids: gameIds,
     });
 
@@ -73,6 +73,8 @@ export default function GamesTable() {
       toast.error("Error fetching player counts");
       return [];
     }
+
+    console.log(data);
 
     return data;
   };
@@ -131,15 +133,15 @@ export default function GamesTable() {
 
     const gameIdsMap: string[] = data.map((game) => game.id);
 
-    const playerCounts = await getPlayerCounts(gameIdsMap);
+    const players = await getPlayersInGames(gameIdsMap);
 
     setGameIds(gameIdsMap); // for realtime changes
     setGames(
       data.map((game) => ({
         ...game,
-        count:
-          playerCounts.find((count) => count.game_id === game.id)
-            ?.player_count || 0,
+        users:
+          players.find((playerGame) => playerGame.game_id === game.id)
+            ?.user_ids || [],
       })),
     );
   };
