@@ -57,6 +57,24 @@ export const columns: ColumnDef<Games>[] = [
       const navigate = useNavigate();
       const { user } = useUserContext();
 
+      const addUserToGame = async () => {
+        const { error } = await supabase.from("user_game").upsert({
+          user_id: user?.id,
+          game_id: game.id,
+          joined_at: new Date(),
+        });
+
+        if (error) {
+          toast.error("Error joining game", {
+            description: "Please try rejoining again.",
+          });
+          return;
+        }
+
+        setIsLoading(false);
+        navigate(game.id);
+      };
+
       const handleSubmit = async (ev: FormEvent) => {
         ev.preventDefault();
 
@@ -72,31 +90,14 @@ export const columns: ColumnDef<Games>[] = [
             ...prev,
             isValid: response.data.isValid,
           }));
-          setIsLoading(false);
 
-          if (response.data.isValid) {
-            const { error } = await supabase.from("user_game").upsert({
-              user_id: user?.id,
-              game_id: game.id,
-              joined_at: new Date(),
-            });
-
-            if (error) {
-              toast.error("Error joining game", {
-                description: "Please try rejoining again.",
-              });
-              return;
-            }
-
-            navigate(game.id);
-          }
+          if (response.data.isValid) addUserToGame();
         } catch (error) {
           toast.error("Failed to create new game", {
             description:
               "There was an error while handling your password please try creating a new game",
           });
           setIsLoading(false);
-          return;
         }
       };
 
@@ -105,11 +106,23 @@ export const columns: ColumnDef<Games>[] = [
           <Dialog>
             <DialogTrigger asChild>
               <Button
+                onClick={(ev) => {
+                  // if password is empty string join directly
+                  if (game.password === "") {
+                    ev.preventDefault();
+                    setIsLoading(true);
+                    addUserToGame();
+                  }
+                }}
                 disabled={game.count >= 2}
                 variant="secondary"
                 type="button"
               >
-                Join
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  "Join"
+                )}
               </Button>
             </DialogTrigger>
             <DialogContent>
