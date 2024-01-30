@@ -7,6 +7,7 @@ import {
 import { useEffect, useState } from "react";
 import useUserContext from "./useUserContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export type Users = {
   id: string;
@@ -28,6 +29,7 @@ export default function useUsers({ id }: { id: string }) {
   const { user } = useUserContext();
   const [users, setUsers] = useState<Users[]>([]);
   const [presentUsers, setPresentUsers] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getUsers();
@@ -73,6 +75,21 @@ export default function useUsers({ id }: { id: string }) {
       supabase.removeChannel(lobbys);
     };
   }, []);
+
+  useEffect(() => {
+    // Check if the user that is signed in on client exists in users array
+    if (!users.length) return;
+    const foundUser = users.find((playerUser) => playerUser.id === user?.id);
+
+    if (!foundUser) {
+      toast.error("Failed to join game", {
+        description:
+          "You are not verified user in this game, please try rejoining the game.",
+      });
+      navigate("/multiplayer");
+      return;
+    }
+  }, [users]);
 
   const getUsers = async () => {
     const { data, error } = await supabase
