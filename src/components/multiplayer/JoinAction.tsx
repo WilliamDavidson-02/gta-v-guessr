@@ -17,6 +17,7 @@ import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { REQUIRED_PLAYER_COUNT } from "@/hooks/useUsers";
 
 export default function JoinAction({ game }: { game: Games }) {
   const [password, setPassword] = useState("");
@@ -86,7 +87,8 @@ export default function JoinAction({ game }: { game: Games }) {
               }
             }}
             disabled={
-              game.users.length >= 2 && !game.users.includes(user?.id || "")
+              game.users.length >= REQUIRED_PLAYER_COUNT &&
+              !game.users.includes(user?.id || "")
             }
             variant="secondary"
             type="button"

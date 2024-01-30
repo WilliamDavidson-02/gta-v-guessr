@@ -9,6 +9,8 @@ import useUserContext from "./useUserContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
+export const REQUIRED_PLAYER_COUNT = 2;
+
 export type Users = {
   id: string;
   username: string;
@@ -45,7 +47,6 @@ export default function useUsers({ id }: { id: string }) {
         () => {
           const state = lobbys.presenceState()[id];
           if (!state) return;
-          console.log(state);
 
           setPresentUsers(
             (state as UserPresence[]).map((user) => user.user_id),
@@ -55,16 +56,12 @@ export default function useUsers({ id }: { id: string }) {
       .on(
         REALTIME_LISTEN_TYPES.PRESENCE,
         { event: REALTIME_PRESENCE_LISTEN_EVENTS.JOIN },
-        ({ key, newPresences }) => {
-          console.log("join", key, newPresences);
-        },
+        () => getUsers(),
       )
       .on(
         REALTIME_LISTEN_TYPES.PRESENCE,
         { event: REALTIME_PRESENCE_LISTEN_EVENTS.LEAVE },
-        ({ key, leftPresences }) => {
-          console.log("leave", key, leftPresences);
-        },
+        () => getUsers(),
       )
       .subscribe(async (status) => {
         if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) return;

@@ -19,9 +19,14 @@ export type Games = {
   users: string[];
 };
 
+type UserPayload = {
+  user_id: string;
+  game_id: string;
+  [key: string]: any;
+};
+
 export default function GamesTable() {
   const [games, setGames] = useState<Games[]>([]);
-  const [gameIds, setGameIds] = useState<string[]>([]);
   const [gameCount, setGameCount] = useState(0);
   const [searchParams] = useSearchParams();
   const setNewPagination = usePaginationSearchParam();
@@ -47,9 +52,17 @@ export default function GamesTable() {
           event: "*",
           schema: "public",
           table: "user_game",
-          filter: `game_id=in.(${gameIds.join(", ")})`,
         },
-        (payload) => console.log(payload),
+        (payload): void => {
+          const game_id =
+            (payload.new as UserPayload).game_id ??
+            (payload.old as UserPayload).game_id;
+          const user_id =
+            (payload.new as UserPayload).user_id ??
+            (payload.old as UserPayload).user_id;
+
+          filterGamePlayerCount(payload.eventType, game_id, user_id);
+        },
       )
       .subscribe();
 
@@ -73,8 +86,6 @@ export default function GamesTable() {
       toast.error("Error fetching player counts");
       return [];
     }
-
-    console.log(data);
 
     return data;
   };
@@ -135,7 +146,6 @@ export default function GamesTable() {
 
     const players = await getPlayersInGames(gameIdsMap);
 
-    setGameIds(gameIdsMap); // for realtime changes
     setGames(
       data.map((game) => ({
         ...game,
@@ -143,6 +153,32 @@ export default function GamesTable() {
           players.find((playerGame) => playerGame.game_id === game.id)
             ?.user_ids || [],
       })),
+    );
+  };
+
+  const filterGamePlayerCount = (
+    eventType: string,
+    game_id: string,
+    user_id: string,
+  ) => {
+    setGames((prev) =>
+      prev.map((game) => {
+        if (game.id === game_id) {
+          let usersArray = game.users;
+          if (eventType === "DELETE") {
+            usersArray = usersArray.filter((user) => user !== user_id);
+          } else if (eventType === "INSERT") {
+            usersArray.push(user_id);
+          }
+
+          return {
+            ...game,
+            users: usersArray,
+          };
+        }
+
+        return game;
+      }),
     );
   };
 
