@@ -13,8 +13,6 @@ app.use(express.json());
 app.post("/api/hash", async (req: Request, res: Response) => {
   const { password } = req.body;
 
-  console.log(password);
-
   const cryptPass = await bcrypt.hash(password, saltRounds);
 
   res.status(200).json({ password: cryptPass });

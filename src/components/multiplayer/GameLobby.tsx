@@ -5,12 +5,43 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../ui/button";
 import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { REALTIME_LISTEN_TYPES } from "@supabase/supabase-js";
+import { Loader2 } from "lucide-react";
 
 export default function GameLobby() {
   const { id } = useParams() as { id: string };
   const { user } = useUserContext();
   const { users, presentUsers } = useUsers({ id });
+  const [isStarting, setIsStarting] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const startGameChanges = supabase.channel("game-state");
+
+    startGameChanges
+      .on(
+        REALTIME_LISTEN_TYPES.POSTGRES_CHANGES,
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          const { started_at } = payload.new as { started_at?: string | null };
+
+          if (started_at) {
+            navigate(`/guessr/${id}`);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(startGameChanges);
+    };
+  }, []);
 
   const isUserLeader = (users: Users[]) => {
     if (!users.length) return;
@@ -44,6 +75,23 @@ export default function GameLobby() {
     navigate("/multiplayer");
   };
 
+  const startGame = async () => {
+    setIsStarting(true);
+
+    const { error } = await supabase
+      .from("games")
+      .update({ started_at: new Date().toISOString() })
+      .eq("id", id);
+
+    setIsStarting(false);
+
+    if (error) {
+      toast.error("Failed to start game", {
+        description: "There was an error starting the game, please try again.",
+      });
+    }
+  };
+
   return (
     <div className="grid h-full grid-cols-4">
       {users.map((user) => (
@@ -59,13 +107,19 @@ export default function GameLobby() {
       <div className="col-span-4 flex w-full items-end justify-center gap-4 pb-20">
         {isUserLeader(users) && (
           <Button
+            onClick={startGame}
             disabled={
               users.length > presentUsers.length ||
               users.length < REQUIRED_PLAYER_COUNT
             }
             type="button"
+            className="min-w-[100px]"
           >
-            Start game
+            {isStarting ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              "Start game"
+            )}
           </Button>
         )}
         <Button onClick={onLeave} variant="destructive" type="button">

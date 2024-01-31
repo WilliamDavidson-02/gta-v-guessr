@@ -50,7 +50,6 @@ export default function JoinAction({ game }: { game: Games }) {
   const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
 
-    setIsPasswordValid((prev) => ({ ...prev, isSubmitted: true }));
     setIsLoading(true);
 
     try {
@@ -58,12 +57,16 @@ export default function JoinAction({ game }: { game: Games }) {
         userInput: password,
         hash: game.password,
       });
-      setIsPasswordValid((prev) => ({
-        ...prev,
+      setIsPasswordValid({
+        isSubmitted: true,
         isValid: response.data.isValid,
-      }));
+      });
 
-      if (response.data.isValid) addUserToGame();
+      if (response.data.isValid) {
+        addUserToGame();
+      } else {
+        setIsLoading(false);
+      }
     } catch (error) {
       toast.error("Failed to create new game", {
         description:
