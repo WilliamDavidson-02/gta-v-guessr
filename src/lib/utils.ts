@@ -1,3 +1,5 @@
+import { Users } from "@/hooks/useUsers";
+import { User } from "@supabase/supabase-js";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -29,4 +31,13 @@ export async function createFileBlobFromUrl(url: string): Promise<File> {
   });
 
   return file;
+}
+
+export function isUserLeader(users: Users[], user: User | null): boolean {
+  if (!users.length) return false;
+  const time = (date: string) => new Date(date).getTime();
+
+  const sort = users.sort((a, b) => time(a.joined_at) - time(b.joined_at));
+
+  return sort[0].id === user?.id;
 }

@@ -1,56 +1,23 @@
 import useUserContext from "@/hooks/useUserContext";
-import useUsers, { REQUIRED_PLAYER_COUNT, Users } from "@/hooks/useUsers";
-import { cn } from "@/lib/utils";
+import { REQUIRED_PLAYER_COUNT, Users } from "@/hooks/useUsers";
+import { cn, isUserLeader } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../ui/button";
 import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { REALTIME_LISTEN_TYPES } from "@supabase/supabase-js";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function GameLobby() {
+type GameLobbyProps = {
+  users: Users[];
+  presentUsers: string[];
+};
+
+export default function GameLobby({ users, presentUsers }: GameLobbyProps) {
   const { id } = useParams() as { id: string };
   const { user } = useUserContext();
-  const { users, presentUsers } = useUsers({ id });
   const [isStarting, setIsStarting] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const startGameChanges = supabase.channel("game-state");
-
-    startGameChanges
-      .on(
-        REALTIME_LISTEN_TYPES.POSTGRES_CHANGES,
-        {
-          event: "*",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${id}`,
-        },
-        (payload) => {
-          const { started_at } = payload.new as { started_at?: string | null };
-
-          if (started_at) {
-            navigate(`/guessr/${id}`);
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(startGameChanges);
-    };
-  }, []);
-
-  const isUserLeader = (users: Users[]) => {
-    if (!users.length) return;
-    const time = (date: string) => new Date(date).getTime();
-
-    const sort = users.sort((a, b) => time(a.joined_at) - time(b.joined_at));
-
-    return sort[0].id === user?.id;
-  };
 
   const onLeave = async () => {
     const { error } = await supabase
@@ -105,7 +72,7 @@ export default function GameLobby() {
         </div>
       ))}
       <div className="col-span-4 flex w-full items-end justify-center gap-4 pb-20">
-        {isUserLeader(users) && (
+        {isUserLeader(users, user) && (
           <Button
             onClick={startGame}
             disabled={

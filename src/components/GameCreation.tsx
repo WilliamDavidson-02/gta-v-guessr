@@ -1,4 +1,4 @@
-import { AllowedRegions, levels } from "./LocationForm";
+import { AllowedRegions } from "./LocationForm";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import seg from "@/lib/seg.json";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Input } from "./ui/input";
 import { z } from "zod";
 import axios from "../axiosConfig";
+import { levels } from "@/lib/level";
 
 export type Levels = "easy" | "medium" | "hard";
 
@@ -79,7 +80,7 @@ export default function GameCreation() {
     setIsFormValid(
       multiplayerSchema.safeParse({ name: gameName, password }).success,
     );
-  }, [gameName, setGameName, password, setPassword]);
+  }, [gameName, setGameName, password, setPassword, isMultiplayer]);
 
   const handleSubmit = async (ev: FormEvent) => {
     ev.preventDefault();
@@ -116,7 +117,7 @@ export default function GameCreation() {
       return;
     }
 
-    navigate(isMultiplayer ? data[0].id : `/guessr/${data[0].id}`);
+    navigate(isMultiplayer ? data[0].id : `/singelplayer/${data[0].id}`);
   };
 
   return (

@@ -1,4 +1,4 @@
-import { Loader2, MapPin, Trash2, Upload } from "lucide-react";
+import { Loader2, Trash2, Upload } from "lucide-react";
 import {
   ChangeEvent,
   Dispatch,
@@ -14,7 +14,6 @@ import { cn, kebabCase, validateFileType } from "@/lib/utils";
 import { toast } from "sonner";
 import { UploadImage } from "./UploadImage";
 import { ImageType, LocationType } from "@/pages/MapBuilder";
-import { Toggle } from "./ui/toggle";
 import { Cords } from "./Map";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -43,6 +42,7 @@ import {
 import { PostgrestSingleResponse } from "@supabase/supabase-js";
 import { latLng, polygon } from "leaflet";
 import seg from "@/lib/seg.json";
+import { levels } from "@/lib/level";
 
 export type AllowedRegions =
   | "city"
@@ -56,13 +56,9 @@ type LocationFormProps = Cords & {
   setImage: Dispatch<SetStateAction<ImageType | null>>;
   activeLocation: LocationType | null;
   setActiveLocation: Dispatch<SetStateAction<LocationType | null>>;
-  pinMap: boolean;
-  setPinMap: Dispatch<SetStateAction<boolean>>;
-  className?: string | undefined;
   setLocations: Dispatch<SetStateAction<LocationType[]>>;
 };
 
-export const levels: [string, ...string[]] = ["easy", "medium", "hard"];
 const acceptedFiles = "image/jpeg, image/jpg, image/png";
 
 const locationSchema = z.object({
@@ -85,11 +81,8 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       setImage,
       activeLocation,
       setActiveLocation,
-      pinMap,
-      setPinMap,
       cords,
       setCords,
-      className,
       setLocations,
       ...props
     },
@@ -113,12 +106,12 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       form.setValue("level", activeLocation.level, { shouldValidate: true });
       if (!image) return;
       form.setValue("image", image.file, { shouldValidate: true });
-    }, [activeLocation, image]);
+    }, [activeLocation, image, form]);
 
     useEffect(() => {
       form.setValue("lat", cords.lat);
       form.setValue("lng", cords.lng);
-    }, [cords, setCords]);
+    }, [cords, setCords, form]);
 
     const resetForm = () => {
       setCords({ lat: 0, lng: 0 });
@@ -130,7 +123,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       const markedLocation = latLng(cords.lat, cords.lng);
 
       // Check if the marked location is with in a region from seg.json
-      for (let region of seg.features) {
+      for (const region of seg.features) {
         const regionLatLngs = region.geometry.coordinates[0].map(([lng, lat]) =>
           latLng(lat, lng),
         );
@@ -313,9 +306,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
       if (!activeLocation) return;
       setIsDeleting(true);
 
-      let bucket, location;
-
-      bucket = await supabase.storage
+      const bucket = await supabase.storage
         .from("image_views")
         .remove([activeLocation.image_path]);
 
@@ -327,7 +318,7 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
         return;
       }
 
-      location = await supabase
+      const location = await supabase
         .from("locations")
         .delete()
         .eq("id", activeLocation.id);
@@ -472,14 +463,6 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
                   </FormItem>
                 )}
               />
-              <Toggle
-                className="col-span-2"
-                data-state={pinMap ? "on" : "off"}
-                onClick={() => setPinMap((prev) => !prev)}
-                variant="outline"
-              >
-                <MapPin />
-              </Toggle>
             </div>
             <FormField
               control={form.control}

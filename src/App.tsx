@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Guessr = lazy(() => import("./pages/Guessr"));
+const Singelplayer = lazy(() => import("./pages/Singelplayer"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Multiplayer = lazy(() => import("./pages/Multiplayer"));
@@ -21,7 +21,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/auth/:form" element={<Auth />} />
           <Route element={<PrivateRoutes />}>
-            <Route path="/guessr/:id?" element={<Guessr />} />
+            <Route path="/singelplayer/:id" element={<Singelplayer />} />
             <Route path="/multiplayer/:id?" element={<Multiplayer />} />
           </Route>
           <Route element={<AdminRoute />}>

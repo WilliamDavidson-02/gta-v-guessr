@@ -71,7 +71,7 @@ export default function useUsers({ id }: { id: string }) {
     return () => {
       supabase.removeChannel(lobbys);
     };
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     // Check if the user that is signed in on client exists in users array
@@ -89,6 +89,8 @@ export default function useUsers({ id }: { id: string }) {
   }, [users]);
 
   const getUsers = async () => {
+    if (!id) return;
+
     const { data, error } = await supabase
       .from("user_game")
       .select("joined_at, profiles(id, username)")

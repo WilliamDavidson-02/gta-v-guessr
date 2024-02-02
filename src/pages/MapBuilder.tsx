@@ -42,7 +42,6 @@ export default function MapBuilder() {
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [locations, setLocations] = useState<LocationType[]>([]);
   const [image, setImage] = useState<ImageType | null>(null);
-  const [pinMap, setPinMap] = useState(false);
   const [activeLocation, setActiveLocation] = useState<LocationType | null>(
     null,
   );
@@ -85,8 +84,6 @@ export default function MapBuilder() {
               setImage={setImage}
               activeLocation={activeLocation}
               setActiveLocation={setActiveLocation}
-              pinMap={pinMap}
-              setPinMap={setPinMap}
               cords={cords}
               setCords={setCords}
               setLocations={setLocations}
@@ -106,13 +103,7 @@ export default function MapBuilder() {
                     onCheckedChange={(check) => setShowGeoAreas(check)}
                   />
                 </div>
-                <Map
-                  cords={cords}
-                  setCords={setCords}
-                  onResize={mapResize}
-                  pinMap={pinMap}
-                  setPinMap={setPinMap}
-                >
+                <Map cords={cords} setCords={setCords} onResize={mapResize}>
                   <>
                     <GeoJSON
                       data={regions}

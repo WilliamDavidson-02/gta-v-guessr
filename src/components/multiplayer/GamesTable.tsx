@@ -19,12 +19,6 @@ export type Games = {
   users: string[];
 };
 
-type UserPayload = {
-  user_id: string;
-  game_id: string;
-  [key: string]: any;
-};
-
 export default function GamesTable() {
   const [games, setGames] = useState<Games[]>([]);
   const [gameCount, setGameCount] = useState(0);
@@ -53,13 +47,9 @@ export default function GamesTable() {
           schema: "public",
           table: "user_game",
         },
-        (payload): void => {
-          const game_id =
-            (payload.new as UserPayload).game_id ??
-            (payload.old as UserPayload).game_id;
-          const user_id =
-            (payload.new as UserPayload).user_id ??
-            (payload.old as UserPayload).user_id;
+        (payload: { [key: string]: any }): void => {
+          const game_id = payload.new.game_id ?? payload.old.game_id;
+          const user_id = payload.new.user_id ?? payload.old.user_id;
 
           filterGamePlayerCount(payload.eventType, game_id, user_id);
         },

@@ -9,7 +9,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Dispatch, ReactNode, SetStateAction, useEffect } from "react";
 import { LatLng } from "@/pages/MapBuilder";
-import { cn } from "@/lib/utils";
 
 type OnResize = number | null;
 
@@ -18,19 +17,13 @@ export type Cords = {
   setCords: Dispatch<SetStateAction<LatLng>>;
 };
 
-type PinMap = {
-  pinMap: boolean;
-  setPinMap: Dispatch<SetStateAction<boolean>>;
+type MapProps = Cords & {
+  className?: string;
+  onResize?: OnResize;
+  children?: ReactNode;
 };
 
-type MapProps = Cords &
-  PinMap & {
-    className?: string;
-    onResize?: OnResize;
-    children?: ReactNode;
-  };
-
-type LocationMarkerProps = Cords & PinMap;
+type LocationMarkerProps = Cords;
 
 const mapExtent = [0, -8192, 8192, 0];
 const bounds: [number, number][] = [
@@ -51,19 +44,10 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
   },
 });
 
-function LocationMarker({
-  cords,
-  setCords,
-  pinMap,
-  setPinMap,
-}: LocationMarkerProps) {
+function LocationMarker({ cords, setCords }: LocationMarkerProps) {
   useMapEvents({
     click(ev) {
-      if (!pinMap) return;
-      const { lat, lng } = ev.latlng;
-
-      setPinMap(false);
-      setCords({ lat, lng });
+      setCords(ev.latlng);
     },
   });
 
@@ -91,18 +75,9 @@ function MapTileLayer({ onResize }: { onResize?: OnResize }) {
   );
 }
 
-export default function Map({
-  className = "",
-  onResize,
-  cords,
-  setCords,
-  pinMap,
-  setPinMap,
-  children,
-}: MapProps) {
+export default function Map({ onResize, cords, setCords, children }: MapProps) {
   return (
     <MapContainer
-      className={cn(className)}
       minZoom={0}
       maxZoom={5}
       crs={CRS}
@@ -110,12 +85,7 @@ export default function Map({
       style={{ height: "100%", width: "100%" }}
     >
       <MapTileLayer onResize={onResize} />
-      <LocationMarker
-        cords={cords}
-        setCords={setCords}
-        pinMap={pinMap}
-        setPinMap={setPinMap}
-      />
+      <LocationMarker cords={cords} setCords={setCords} />
       {children}
     </MapContainer>
   );
