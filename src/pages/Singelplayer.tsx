@@ -7,7 +7,14 @@ import { useParams } from "react-router-dom";
 
 export default function Singleplayer() {
   const { id } = useParams();
-  const { getGame, location, game } = useGame({ id } as { id: string });
+  const {
+    getGame,
+    location,
+    game,
+    playerPoints,
+    setPlayerPoints,
+    getNewLocation,
+  } = useGame({ id } as { id: string });
 
   useEffect(() => {
     getGame();
@@ -17,7 +24,13 @@ export default function Singleplayer() {
     <Layout>
       <Navigation />
       <div className="h-[calc(100vh-96px)]">
-        <Game location={location} game={game} />
+        <Game
+          location={location}
+          game={game}
+          playerPoints={playerPoints}
+          setPlayerPoints={setPlayerPoints}
+          getNewLocation={getNewLocation}
+        />
       </div>
     </Layout>
   );

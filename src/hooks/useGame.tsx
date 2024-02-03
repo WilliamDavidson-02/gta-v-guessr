@@ -1,8 +1,10 @@
 import supabase from "@/supabase/supabaseConfig";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export type GameData = {
+  id: string;
   is_multiplayer: boolean;
   region: string;
   level: string;
@@ -20,21 +22,25 @@ export default function useGame({ id }: { id: string }) {
   const [round, setRound] = useState(1);
   const [prevLocations, setPrevLocations] = useState<string[]>([]);
   const [location, setLocation] = useState<Location | null>(null);
+  const [playerPoints, setPlayerPoints] = useState(5000);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!game) return;
     getPrevLocations();
+    getPlayerPoints();
   }, [game]);
 
   // Get game is called in component where the hook is used due to checks if mp games are started.
   const getGame = async () => {
     const { data, error } = await supabase
       .from("games")
-      .select("started_at, is_multiplayer, region, level")
+      .select("id, is_multiplayer, region, level")
       .eq("id", id);
 
     if (error) {
       toast.error("Error getting game state");
+      navigate("/");
       return;
     }
 
@@ -111,6 +117,8 @@ export default function useGame({ id }: { id: string }) {
       return;
     }
 
+    setPrevLocations((prev) => [...prev, data[0].id]); // Add this location to not select it for next round
+
     const { error: err } = await supabase
       .from("game_location")
       .insert({ game_id: id, location_id: data[0].id });
@@ -129,5 +137,31 @@ export default function useGame({ id }: { id: string }) {
     return data.publicUrl;
   };
 
-  return { getGame, game, round, location };
+  const getPlayerPoints = async () => {
+    const { data, error } = await supabase
+      .from("guesses")
+      .select("points")
+      .eq("game_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      toast.error("Error while getting player pints");
+      return;
+    }
+
+    if (!data.length) return;
+
+    setPlayerPoints(data[0].points);
+  };
+
+  return {
+    getGame,
+    game,
+    round,
+    location,
+    playerPoints,
+    setPlayerPoints,
+    getNewLocation,
+  };
 }
