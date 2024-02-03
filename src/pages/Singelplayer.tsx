@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 
 export default function Singleplayer() {
   const { id } = useParams();
-  const { getGame } = useGame({ id } as { id: string });
+  const { getGame, location } = useGame({ id } as { id: string });
 
   useEffect(() => {
     getGame();
@@ -17,7 +17,7 @@ export default function Singleplayer() {
     <Layout>
       <Navigation />
       <div className="h-[calc(100vh-96px)]">
-        <Game />
+        <Game location={location} />
       </div>
     </Layout>
   );
