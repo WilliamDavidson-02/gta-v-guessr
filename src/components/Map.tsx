@@ -5,7 +5,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import L from "leaflet";
+import L, { DivIcon, Icon, IconOptions } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Dispatch, ReactNode, SetStateAction, useEffect } from "react";
 import { LatLng } from "@/pages/MapBuilder";
@@ -17,13 +17,15 @@ export type Cords = {
   setCords: Dispatch<SetStateAction<LatLng>>;
 };
 
-type MapProps = Cords & {
-  className?: string;
-  onResize?: OnResize;
-  children?: ReactNode;
+type MapProps = {
+  onResize: OnResize;
+  children: ReactNode;
 };
 
-type LocationMarkerProps = Cords;
+type LocationMarkerProps = Cords & {
+  icon?: Icon<IconOptions> | DivIcon;
+  isPinned?: boolean;
+};
 
 const mapExtent = [0, -8192, 8192, 0];
 const bounds: [number, number][] = [
@@ -44,14 +46,22 @@ const CRS = L.Util.extend({}, L.CRS.Simple, {
   },
 });
 
-function LocationMarker({ cords, setCords }: LocationMarkerProps) {
+export function LocationMarker({
+  cords,
+  setCords,
+  icon,
+  isPinned,
+}: LocationMarkerProps) {
   useMapEvents({
     click(ev) {
+      if (isPinned) return;
       setCords(ev.latlng);
     },
   });
 
   if (!cords.lat && !cords.lng) return null;
+
+  if (icon) return <Marker position={cords} icon={icon} />;
 
   return <Marker position={cords} />;
 }
@@ -75,7 +85,7 @@ function MapTileLayer({ onResize }: { onResize?: OnResize }) {
   );
 }
 
-export default function Map({ onResize, cords, setCords, children }: MapProps) {
+export default function Map({ onResize, children }: MapProps) {
   return (
     <MapContainer
       minZoom={0}
@@ -85,7 +95,6 @@ export default function Map({ onResize, cords, setCords, children }: MapProps) {
       style={{ height: "100%", width: "100%" }}
     >
       <MapTileLayer onResize={onResize} />
-      <LocationMarker cords={cords} setCords={setCords} />
       {children}
     </MapContainer>
   );

@@ -1,5 +1,5 @@
 import { LocationForm } from "@/components/LocationForm";
-import Map from "@/components/Map";
+import Map, { LocationMarker } from "@/components/Map";
 import { Label } from "@/components/ui/label";
 import {
   ResizableHandle,
@@ -103,8 +103,9 @@ export default function MapBuilder() {
                     onCheckedChange={(check) => setShowGeoAreas(check)}
                   />
                 </div>
-                <Map cords={cords} setCords={setCords} onResize={mapResize}>
+                <Map onResize={mapResize}>
                   <>
+                    <LocationMarker cords={cords} setCords={setCords} />
                     <GeoJSON
                       data={regions}
                       style={(feature) => {

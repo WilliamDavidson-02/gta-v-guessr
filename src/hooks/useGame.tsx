@@ -22,8 +22,9 @@ export default function useGame({ id }: { id: string }) {
   const [location, setLocation] = useState<Location | null>(null);
 
   useEffect(() => {
+    if (!game) return;
     getPrevLocations();
-  }, []);
+  }, [game]);
 
   // Get game is called in component where the hook is used due to checks if mp games are started.
   const getGame = async () => {
