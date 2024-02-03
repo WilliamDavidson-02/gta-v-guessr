@@ -41,3 +41,20 @@ export function isUserLeader(users: Users[], user: User | null): boolean {
 
   return sort[0].id === user?.id;
 }
+
+export function calculateArea(coordinates: number[][]) {
+  /* 
+  Calculating the area bu the shoelace formula.
+  Dose not return an actual unit of measurement, instead a representation of the areas
+  scale to be used as a modifier in the point system.
+  */
+
+  let area = 0;
+  for (let i = 0; i < coordinates.length; i++) {
+    let j = (i + 1) % coordinates.length; // j is 1 index ahead of i
+    area += coordinates[i][0] * coordinates[j][1];
+    area -= coordinates[j][0] * coordinates[i][1];
+  }
+
+  return Math.floor(Math.abs(area / 2));
+}

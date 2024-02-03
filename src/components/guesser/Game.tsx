@@ -4,13 +4,16 @@ import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
 import { Button } from "../ui/button";
-import { Location } from "@/hooks/useGame";
+import { GameData, Location } from "@/hooks/useGame";
 import { Marker, Polyline } from "react-leaflet";
 import { divIcon, icon } from "leaflet";
 import useUserContext from "@/hooks/useUserContext";
+import seg from "../../lib/seg.json";
+import { calculateArea } from "@/lib/utils";
 
 type GameProps = {
   location: Location | null;
+  game: GameData | null;
 };
 
 const flagIcon = icon({
@@ -19,7 +22,7 @@ const flagIcon = icon({
   iconAnchor: [6, 32],
 });
 
-export default function Game({ location }: GameProps) {
+export default function Game({ location, game }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
@@ -32,7 +35,7 @@ export default function Game({ location }: GameProps) {
     iconAnchor: [16, 16],
   });
 
-  const calcDistance = (location: LatLng): number => {
+  const calcDistance = (cords: LatLng, location: LatLng): number => {
     const diffLng = cords.lng - location.lng;
     const diffLat = cords.lat - location.lat;
     const distance = Math.floor(
@@ -46,7 +49,41 @@ export default function Game({ location }: GameProps) {
     if (!location) return;
     setIsSubmitted(true);
 
-    const distance = calcDistance(location);
+    let levelModifier;
+    let score = 5000;
+    const distance = calcDistance(location, cords);
+
+    if (distance > 200) {
+      // Calculate score with gaussian formula
+      let area = 10000000;
+      const region = seg.features.find(
+        (feature) => feature.properties.seg === game?.region,
+      );
+      if (region) {
+        area = calculateArea(region!.geometry.coordinates[0]);
+      }
+
+      switch (game?.level) {
+        case "ease":
+          levelModifier = 0.9;
+          break;
+        case "medium":
+          levelModifier = 0.8;
+          break;
+        case "hard":
+          levelModifier = 0.7;
+          break;
+        default:
+          levelModifier = 1;
+      }
+
+      // Sigma is a modifier for the gaussian curve which effects how fast the curve goes down to zero
+      const sigma = Math.floor((area / 7500) * levelModifier);
+
+      score = Math.floor(score * Math.exp(-0.5 * (distance / sigma) ** 2));
+    }
+
+    console.log("score: ", score);
   };
 
   return (
