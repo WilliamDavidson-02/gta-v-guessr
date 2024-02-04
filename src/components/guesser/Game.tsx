@@ -21,6 +21,7 @@ type GameProps = {
   playerPoints: number;
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   getNewLocation: () => Promise<void>;
+  round: number;
 };
 
 const flagIcon = icon({
@@ -35,6 +36,7 @@ export default function Game({
   playerPoints,
   setPlayerPoints,
   getNewLocation,
+  round,
 }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
@@ -137,6 +139,12 @@ export default function Game({
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-md">
+      <Card className="absolute right-4 top-4 z-20 border-none bg-background/40 backdrop-blur-sm">
+        <CardContent className="grid grid-cols-2 gap-4 p-2">
+          <div>Round {round}/5</div>
+          <div>Points {playerPoints}</div>
+        </CardContent>
+      </Card>
       <div className="absolute bottom-4 left-4 z-20 w-full max-w-[334px] md:max-w-[500px]">
         {showResults && (
           <Card className="mb-2 border-none bg-background/40 backdrop-blur-sm">

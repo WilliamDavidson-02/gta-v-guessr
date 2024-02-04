@@ -1,4 +1,4 @@
-import { forwardRef, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,10 @@ type ImageProps = {
 const UploadImage = forwardRef<HTMLImageElement, ImageProps>(
   ({ className, src, alt = "", ...props }, ref) => {
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+      if (!src) setIsLoading(true);
+    }, [src]);
 
     return (
       <>

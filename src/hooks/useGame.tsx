@@ -19,10 +19,11 @@ export type Location = {
 
 export default function useGame({ id }: { id: string }) {
   const [game, setGame] = useState<GameData | null>(null);
-  const [round, setRound] = useState(1);
+  const [round, setRound] = useState(0);
   const [prevLocations, setPrevLocations] = useState<string[]>([]);
   const [location, setLocation] = useState<Location | null>(null);
   const [playerPoints, setPlayerPoints] = useState(5000);
+  const [isGameOver, setIsGameOver] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,13 +75,8 @@ export default function useGame({ id }: { id: string }) {
     }
 
     const locations = data.map((location) => location.location_id);
-
+    setRound(locations.length);
     getCurrentLocation(locations[locations.length - 1]);
-
-    setRound(() => {
-      const locationCompleted = data.filter((location) => location.ended_at);
-      return locationCompleted.length + 1;
-    });
     setPrevLocations(locations);
   };
 
@@ -103,9 +99,16 @@ export default function useGame({ id }: { id: string }) {
 
   const getNewLocation = async () => {
     if (!game) return;
+    if (round >= 5) {
+      setIsGameOver(true);
+      return;
+    }
+
+    // Reset values, manly for image skeleton to shoe user new location is coming
+    setLocation({ id: "", image_path: "", lat: 0, lng: 0 });
 
     const { data, error } = await supabase
-      .from("locations")
+      .from("random_location")
       .select("id, image_path, lat, lng")
       .eq("level", game.level)
       .eq("region", game.region)
@@ -118,6 +121,7 @@ export default function useGame({ id }: { id: string }) {
     }
 
     setPrevLocations((prev) => [...prev, data[0].id]); // Add this location to not select it for next round
+    setRound((prev) => prev + 1);
 
     const { error: err } = await supabase
       .from("game_location")

@@ -14,6 +14,7 @@ export default function Singleplayer() {
     playerPoints,
     setPlayerPoints,
     getNewLocation,
+    round,
   } = useGame({ id } as { id: string });
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function Singleplayer() {
           playerPoints={playerPoints}
           setPlayerPoints={setPlayerPoints}
           getNewLocation={getNewLocation}
+          round={round}
         />
       </div>
     </Layout>
