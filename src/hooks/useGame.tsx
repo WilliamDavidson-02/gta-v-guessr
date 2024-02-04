@@ -23,7 +23,6 @@ export default function useGame({ id }: { id: string }) {
   const [prevLocations, setPrevLocations] = useState<string[]>([]);
   const [location, setLocation] = useState<Location | null>(null);
   const [playerPoints, setPlayerPoints] = useState(5000);
-  const [isGameOver, setIsGameOver] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,10 +98,6 @@ export default function useGame({ id }: { id: string }) {
 
   const getNewLocation = async () => {
     if (!game) return;
-    if (round >= 5) {
-      setIsGameOver(true);
-      return;
-    }
 
     // Reset values, manly for image skeleton to shoe user new location is coming
     setLocation({ id: "", image_path: "", lat: 0, lng: 0 });

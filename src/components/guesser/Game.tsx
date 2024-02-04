@@ -1,5 +1,11 @@
 import Map, { LocationMarker } from "../Map";
-import { Dispatch, SetStateAction, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useEffect,
+  useState,
+} from "react";
 import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
@@ -14,6 +20,7 @@ import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter } from "../ui/card";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type GameProps = {
   location: Location | null;
@@ -24,11 +31,19 @@ type GameProps = {
   round: number;
 };
 
+type UserGuesses = {
+  guess: LatLng;
+  location: LatLng;
+  userChar: string;
+};
+
 const flagIcon = icon({
   iconUrl: "/flag_icon.svg",
   iconSize: [32, 32],
   iconAnchor: [6, 32],
 });
+
+export const MAX_GAME_ROUNDS = 5;
 
 export default function Game({
   location,
@@ -44,6 +59,8 @@ export default function Game({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [userGuesses, setUserGuesses] = useState<UserGuesses[]>([]);
   const userIcon = divIcon({
     html: user?.user_metadata.username.charAt(0),
     className:
@@ -51,6 +68,15 @@ export default function Game({
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!game) return;
+    if (playerPoints === 0) {
+      getAllPlayerGuesses();
+      setIsGameOver(true);
+    }
+  }, [game, playerPoints]);
 
   const calcDistance = (cords: LatLng, location: LatLng): number => {
     const diffLng = cords.lng - location.lng;
@@ -126,76 +152,148 @@ export default function Game({
     return `${distance}m`;
   };
 
+  const getAllPlayerGuesses = async () => {
+    const { data, error } = await supabase
+      .from("guesses")
+      .select("lat, lng, locations(lat, lng), profiles(username)")
+      .eq("game_id", game?.id);
+
+    if (error) {
+      toast.error("Error getting player guesses");
+      return;
+    }
+
+    const guesses: UserGuesses[] = data.map((guess) => {
+      const { locations, profiles } = guess as { [key: string]: any };
+
+      return {
+        guess: { lat: guess.lat, lng: guess.lng },
+        location: { lat: locations.lat, lng: locations.lng },
+        userChar: profiles.username.charAt(0),
+      };
+    });
+
+    setUserGuesses(guesses);
+  };
+
   const handelNewLocation = async () => {
-    setIsNewLocationLoading(true);
-    await getNewLocation();
+    if (round >= MAX_GAME_ROUNDS || playerPoints === 0) {
+      getAllPlayerGuesses();
+      setIsGameOver(true);
+      return;
+    }
 
     // Rest values
     setCords({ lat: 0, lng: 0 });
     setIsSubmitted(false);
-    setShowResults(false);
+
+    setIsNewLocationLoading(true);
+    await getNewLocation();
     setIsNewLocationLoading(false);
+    setShowResults(false);
   };
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-md">
       <Card className="absolute right-4 top-4 z-20 border-none bg-background/40 backdrop-blur-sm">
         <CardContent className="grid grid-cols-2 gap-4 p-2">
-          <div>Round {round}/5</div>
+          <div>Round {`${round}/${MAX_GAME_ROUNDS}`}</div>
           <div>Points {playerPoints}</div>
         </CardContent>
       </Card>
       <div className="absolute bottom-4 left-4 z-20 w-full max-w-[334px] md:max-w-[500px]">
-        {showResults && (
-          <Card className="mb-2 border-none bg-background/40 backdrop-blur-sm">
-            <CardContent className="grid grid-cols-2 pt-6 text-center text-3xl font-semibold">
-              <div className="text-yellow-500">{playerPoints}</div>
-              <div className="text-blue-500">{formatDistance()}</div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handelNewLocation} className="w-full">
-                {isNewLocationLoading ? (
-                  <Loader2 className="animate-spin" size={20} />
-                ) : (
-                  "Next"
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
+        {isGameOver ? (
+          <Button
+            onClick={() => startTransition(() => navigate("/"))}
+            className="w-full"
+          >
+            Back to start
+          </Button>
+        ) : (
+          <>
+            {showResults && (
+              <Card className="mb-2 border-none bg-background/40 backdrop-blur-sm">
+                <CardContent className="grid grid-cols-2 pt-6 text-center text-3xl font-semibold">
+                  <div className="text-yellow-500">{playerPoints}</div>
+                  <div className="text-blue-500">{formatDistance()}</div>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={handelNewLocation} className="w-full">
+                    {isNewLocationLoading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : round >= MAX_GAME_ROUNDS || playerPoints === 0 ? (
+                      "Show results"
+                    ) : (
+                      "Next"
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+            <UploadImage
+              className="drop-shadow-md"
+              src={location ? location.image_path : ""}
+            />
+            <Button
+              type="button"
+              onClick={handelSubmitGuess}
+              disabled={(!cords.lat && !cords.lng) || isSubmitted}
+              className="mt-2 w-full"
+            >
+              Submit guess
+            </Button>
+          </>
         )}
-        <UploadImage
-          className="drop-shadow-md"
-          src={location ? location.image_path : ""}
-        />
-        <Button
-          type="button"
-          onClick={handelSubmitGuess}
-          disabled={(!cords.lat && !cords.lng) || isSubmitted}
-          className="mt-2 w-full"
-        >
-          Submit guess
-        </Button>
       </div>
       <Map onResize={resize}>
-        <LocationMarker
-          cords={cords}
-          setCords={setCords}
-          icon={userIcon}
-          isPinned={isSubmitted}
-        />
-        {isSubmitted && location && (
+        {isGameOver ? (
+          userGuesses.map((userGuess) => (
+            <div key={Math.abs(userGuess.location.lat * userGuess.guess.lng)}>
+              <LocationMarker
+                cords={userGuess.guess}
+                setCords={setCords}
+                icon={userIcon}
+                isPinned={true}
+              />
+              <Polyline
+                color="#ffab00"
+                positions={[
+                  [userGuess.location.lat, userGuess.location.lng],
+                  [userGuess.guess.lat, userGuess.guess.lng],
+                ]}
+              />
+              <Marker
+                position={{
+                  lat: userGuess.location.lat,
+                  lng: userGuess.location.lng,
+                }}
+                icon={flagIcon}
+              />
+            </div>
+          ))
+        ) : (
           <>
-            <Polyline
-              color="#ffab00"
-              positions={[
-                [location.lat, location.lng],
-                [cords.lat, cords.lng],
-              ]}
+            <LocationMarker
+              cords={cords}
+              setCords={setCords}
+              icon={userIcon}
+              isPinned={isSubmitted}
             />
-            <Marker
-              position={{ lat: location.lat, lng: location.lng }}
-              icon={flagIcon}
-            />
+            {isSubmitted && location && (
+              <>
+                <Polyline
+                  color="#ffab00"
+                  positions={[
+                    [location.lat, location.lng],
+                    [cords.lat, cords.lng],
+                  ]}
+                />
+                <Marker
+                  position={{ lat: location.lat, lng: location.lng }}
+                  icon={flagIcon}
+                />
+              </>
+            )}
           </>
         )}
       </Map>
