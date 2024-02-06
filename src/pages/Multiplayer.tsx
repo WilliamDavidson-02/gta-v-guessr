@@ -13,6 +13,7 @@ import useGame from "@/hooks/useGame";
 import { isUserLeader } from "@/lib/utils";
 import useUserContext from "@/hooks/useUserContext";
 import { LatLng } from "./MapBuilder";
+import { toast } from "sonner";
 
 export default function Multiplayer() {
   const { id } = useParams() as { id: string };
@@ -30,6 +31,7 @@ export default function Multiplayer() {
     getCurrentLocation,
     getPrevLocations,
     getPlayerPoints,
+    getCurrentGuess,
   } = useGame({ id });
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [hasPlayersGuessed, setHasPlayerGuessed] = useState(false);
@@ -89,6 +91,30 @@ export default function Multiplayer() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!location || !game || !isSubmitted) return;
+    getHasPlayersGuessed(location.id, game.id);
+  }, [location, game, isSubmitted]);
+
+  const getHasPlayersGuessed = async (locationId: string, gameId: string) => {
+    if (!locationId || !gameId) return;
+    const { data, error } = await supabase
+      .from("guesses")
+      .select("user_id")
+      .eq("location_id", locationId)
+      .eq("game_id", gameId);
+
+    if (error) {
+      toast.error("Error checking if all players has guessed");
+      console.log(error);
+      return;
+    }
+
+    if (data.length === 2) {
+      setHasPlayerGuessed(true);
+    }
+  };
+
   const getLocationOnUser = async (location_id: string) => {
     const users = await getUsers();
     if (users && !isUserLeader(users, user)) {
@@ -134,6 +160,7 @@ export default function Multiplayer() {
             setIsGameOver={setIsGameOver}
             isSubmitted={isSubmitted}
             setIsSubmitted={setIsSubmitted}
+            getCurrentGuess={getCurrentGuess}
           />
         ) : id ? (
           <GameLobby users={users} presentUsers={presentUsers} />

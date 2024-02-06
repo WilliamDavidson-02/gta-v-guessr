@@ -80,8 +80,6 @@ export default function useGame({ id }: Props) {
   };
 
   const getCurrentLocation = async (locationId: string) => {
-    console.log("getting current location");
-
     const { data, error } = await supabase
       .from("locations")
       .select("id, image_path, lat, lng")
@@ -96,10 +94,31 @@ export default function useGame({ id }: Props) {
     setLocation(data[0]);
   };
 
+  const getCurrentGuess = async (
+    locationId: string,
+    gameId: string,
+    userId: string,
+  ) => {
+    if (!locationId || !gameId || !userId) return;
+
+    const { data, error } = await supabase
+      .from("guesses")
+      .select("lat, lng")
+      .eq("location_id", locationId)
+      .eq("game_id", gameId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.log(error);
+      toast.error("Error while getting current guess.");
+      return;
+    }
+
+    return data[0];
+  };
+
   const getNewLocation = async () => {
     if (!game) return;
-
-    console.log("gettingNewLocation");
 
     // Reset values, manly for image skeleton to shoe user new location is coming
     setLocation({ id: "", image_path: "", lat: 0, lng: 0 });
@@ -148,7 +167,6 @@ export default function useGame({ id }: Props) {
       .limit(1);
 
     if (error) {
-      console.log(error);
       toast.error("Error while getting player pints");
       return;
     }
@@ -170,5 +188,6 @@ export default function useGame({ id }: Props) {
     getCurrentLocation,
     getPrevLocations,
     getPlayerPoints,
+    getCurrentGuess,
   };
 }

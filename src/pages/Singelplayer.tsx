@@ -18,6 +18,7 @@ export default function Singleplayer() {
     round,
     getPrevLocations,
     getPlayerPoints,
+    getCurrentGuess,
   } = useGame({ id } as { id: string });
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
@@ -54,6 +55,7 @@ export default function Singleplayer() {
           setIsGameOver={setIsGameOver}
           isSubmitted={isSubmitted}
           setIsSubmitted={setIsSubmitted}
+          getCurrentGuess={getCurrentGuess}
         />
       </div>
     </Layout>

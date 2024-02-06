@@ -23,18 +23,23 @@ import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type GameProps = Cords & {
-  location: Location | null;
-  game: GameData | null;
-  playerPoints: number;
-  setPlayerPoints: Dispatch<SetStateAction<number>>;
-  getNewLocation: () => Promise<void>;
   round: number;
-  showResults: boolean;
-  setShowResults: Dispatch<SetStateAction<boolean>>;
+  game: GameData | null;
+  location: Location | null;
+  playerPoints: number;
   isGameOver: boolean;
-  setIsGameOver: Dispatch<SetStateAction<boolean>>;
   isSubmitted: boolean;
+  showResults: boolean;
+  setPlayerPoints: Dispatch<SetStateAction<number>>;
+  setIsGameOver: Dispatch<SetStateAction<boolean>>;
+  setShowResults: Dispatch<SetStateAction<boolean>>;
   setIsSubmitted: Dispatch<SetStateAction<boolean>>;
+  getNewLocation: () => Promise<void>;
+  getCurrentGuess: (
+    locationId: string,
+    gameId: string,
+    userId: string,
+  ) => Promise<LatLng | undefined>;
 } & (
     | {
         isMultiplayer: true;
@@ -51,6 +56,7 @@ type UserGuesses = {
   guess: LatLng;
   location: LatLng;
   userChar: string;
+  userId: string;
 };
 
 const flagIcon = icon({
@@ -78,18 +84,12 @@ export default function Game(props: GameProps) {
     setIsGameOver,
     isSubmitted,
     setIsSubmitted,
+    getCurrentGuess,
   } = props;
   const resize = useResize();
   const { user } = useUserContext();
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
   const [userGuesses, setUserGuesses] = useState<UserGuesses[]>([]);
-  const userIcon = divIcon({
-    html: user?.user_metadata.username.charAt(0),
-    className:
-      "bg-background/50 backdrop-blur-sm rounded-full flex justify-center items-center text-lg",
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,6 +99,31 @@ export default function Game(props: GameProps) {
       setIsGameOver(true);
     }
   }, [game, playerPoints]);
+
+  useEffect(() => {
+    if (!game || !location || !user) return;
+    const handleGuessedOnReload = async () => {
+      const currentGuess = await getCurrentGuess(location.id, game.id, user.id);
+
+      if (!currentGuess) return;
+
+      setCords(currentGuess);
+      setIsSubmitted(true);
+      setShowResults(true);
+    };
+
+    handleGuessedOnReload();
+  }, [game, location, user]);
+
+  const userIcon = (char: string) => {
+    return divIcon({
+      html: char,
+      className:
+        "bg-background/50 backdrop-blur-sm rounded-full flex justify-center items-center text-lg",
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+  };
 
   const calcDistance = (cords: LatLng, location: LatLng): number => {
     const diffLng = cords.lng - location.lng;
@@ -197,6 +222,7 @@ export default function Game(props: GameProps) {
         guess: { lat, lng },
         location: { lat: locations.lat, lng: locations.lng },
         userChar: profiles.username.charAt(0),
+        userId: user_id,
       };
     });
 
@@ -290,11 +316,11 @@ export default function Game(props: GameProps) {
               <LocationMarker
                 cords={userGuess.guess}
                 setCords={setCords}
-                icon={userIcon}
+                icon={userIcon(userGuess.userChar)}
                 isPinned={true}
               />
               <Polyline
-                color="#ffab00"
+                color={userGuess.userId === user?.id ? "#ffab00" : "#ff4848"}
                 positions={[
                   [userGuess.location.lat, userGuess.location.lng],
                   [userGuess.guess.lat, userGuess.guess.lng],
@@ -314,7 +340,7 @@ export default function Game(props: GameProps) {
             <LocationMarker
               cords={cords}
               setCords={setCords}
-              icon={userIcon}
+              icon={userIcon(user?.user_metadata.username.charAt(0))}
               isPinned={isSubmitted}
             />
             {isSubmitted && location && (
