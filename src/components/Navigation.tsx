@@ -60,10 +60,14 @@ export default function Navigation() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer">
-                Single player
+                <Link className="w-full" to="/" reloadDocument>
+                  Single player
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer">
-                Multiplayer
+                <Link className="w-full" to="/multiplayer" reloadDocument>
+                  Multiplayer
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="cursor-pointer">
