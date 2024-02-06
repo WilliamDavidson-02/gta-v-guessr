@@ -9,16 +9,18 @@ import { LatLng } from "./MapBuilder";
 export default function Singleplayer() {
   const { id } = useParams();
   const {
-    getGame,
-    location,
     game,
-    playerPoints,
-    setPlayerPoints,
-    getNewLocation,
+    location,
     round,
+    playerPoints,
+    userGuesses,
+    setPlayerPoints,
+    getGame,
+    getNewLocation,
     getPrevLocations,
     getPlayerPoints,
     getCurrentGuess,
+    getAllPlayerGuesses,
   } = useGame({ id } as { id: string });
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
@@ -56,6 +58,8 @@ export default function Singleplayer() {
           isSubmitted={isSubmitted}
           setIsSubmitted={setIsSubmitted}
           getCurrentGuess={getCurrentGuess}
+          getAllPlayerGuesses={getAllPlayerGuesses}
+          userGuesses={userGuesses}
         />
       </div>
     </Layout>

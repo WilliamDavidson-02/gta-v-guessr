@@ -10,7 +10,7 @@ import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
 import { Button } from "../ui/button";
-import { GameData, Location } from "@/hooks/useGame";
+import { GameData, Location, UserGuesses } from "@/hooks/useGame";
 import { Marker, Polyline } from "react-leaflet";
 import { divIcon, icon } from "leaflet";
 import useUserContext from "@/hooks/useUserContext";
@@ -30,11 +30,13 @@ type GameProps = Cords & {
   isGameOver: boolean;
   isSubmitted: boolean;
   showResults: boolean;
+  userGuesses: UserGuesses[];
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
   setIsSubmitted: Dispatch<SetStateAction<boolean>>;
   getNewLocation: () => Promise<void>;
+  getAllPlayerGuesses: () => Promise<void>;
   getCurrentGuess: (
     locationId: string,
     gameId: string,
@@ -50,14 +52,6 @@ type GameProps = Cords & {
         isMultiplayer: false;
       }
   );
-
-type UserGuesses = {
-  key: string;
-  guess: LatLng;
-  location: LatLng;
-  userChar: string;
-  userId: string;
-};
 
 const flagIcon = icon({
   iconUrl: "/flag_icon.svg",
@@ -85,11 +79,12 @@ export default function Game(props: GameProps) {
     isSubmitted,
     setIsSubmitted,
     getCurrentGuess,
+    getAllPlayerGuesses,
+    userGuesses,
   } = props;
   const resize = useResize();
   const { user } = useUserContext();
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
-  const [userGuesses, setUserGuesses] = useState<UserGuesses[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -199,37 +194,8 @@ export default function Game(props: GameProps) {
     return `${distance}m`;
   };
 
-  const getAllPlayerGuesses = async () => {
-    const { data, error } = await supabase
-      .from("guesses")
-      .select(
-        "user_id, location_id, lat, lng, locations(lat, lng), profiles(username)",
-      )
-      .eq("game_id", game?.id);
-
-    if (error) {
-      toast.error("Error getting player guesses");
-      return;
-    }
-
-    const guesses: UserGuesses[] = data.map((guess) => {
-      const { locations, profiles, lat, lng, location_id, user_id } = guess as {
-        [key: string]: any;
-      };
-
-      return {
-        key: location_id + user_id,
-        guess: { lat, lng },
-        location: { lat: locations.lat, lng: locations.lng },
-        userChar: profiles.username.charAt(0),
-        userId: user_id,
-      };
-    });
-
-    setUserGuesses(guesses);
-  };
-
   const handelNewLocation = async () => {
+    if (!game) return;
     if (round >= MAX_GAME_ROUNDS || playerPoints === 0) {
       getAllPlayerGuesses();
       setIsGameOver(true);

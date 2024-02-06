@@ -24,6 +24,7 @@ export default function Multiplayer() {
     round,
     location,
     playerPoints,
+    userGuesses,
     setPlayerPoints,
     setRound,
     getGame,
@@ -32,6 +33,8 @@ export default function Multiplayer() {
     getPrevLocations,
     getPlayerPoints,
     getCurrentGuess,
+    getAllPlayerGuesses,
+    updateGameToEnded,
   } = useGame({ id });
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [hasPlayersGuessed, setHasPlayerGuessed] = useState(false);
@@ -77,6 +80,14 @@ export default function Multiplayer() {
           filter: `game_id=eq.${id}`,
         },
         (payload: { [key: string]: any }) => {
+          if (payload.new.points === 0) {
+            setIsGameOver(true);
+            updateGameToEnded();
+            if (payload.new.user_id !== user?.id) {
+              getAllPlayerGuesses();
+            }
+            getAllPlayerGuesses;
+          }
           if (payload.new.user_id !== user?.id || isUserLeader(users, user)) {
             setHasPlayerGuessed(true);
           }
@@ -95,6 +106,21 @@ export default function Multiplayer() {
     if (!location || !game || !isSubmitted) return;
     getHasPlayersGuessed(location.id, game.id);
   }, [location, game, isSubmitted]);
+
+  useEffect(() => {
+    setHasPlayerGuessed(false);
+  }, [location]);
+
+  useEffect(() => {
+    if (!game) return;
+    if (game.started_at) setIsGameStarted(true);
+    if (game.ended_at) {
+      setIsGameOver(true);
+      getAllPlayerGuesses();
+    }
+    getPrevLocations();
+    getPlayerPoints();
+  }, [game]);
 
   const getHasPlayersGuessed = async (locationId: string, gameId: string) => {
     if (!locationId || !gameId) return;
@@ -126,17 +152,6 @@ export default function Multiplayer() {
     }
   };
 
-  useEffect(() => {
-    setHasPlayerGuessed(false);
-  }, [location]);
-
-  useEffect(() => {
-    if (!game) return;
-    if (game.started_at) setIsGameStarted(true);
-    getPrevLocations();
-    getPlayerPoints();
-  }, [game]);
-
   return (
     <Layout>
       <Navigation />
@@ -161,6 +176,8 @@ export default function Multiplayer() {
             isSubmitted={isSubmitted}
             setIsSubmitted={setIsSubmitted}
             getCurrentGuess={getCurrentGuess}
+            getAllPlayerGuesses={getAllPlayerGuesses}
+            userGuesses={userGuesses}
           />
         ) : id ? (
           <GameLobby users={users} presentUsers={presentUsers} />

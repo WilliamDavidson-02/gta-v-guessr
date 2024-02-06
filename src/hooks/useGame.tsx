@@ -3,10 +3,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useUserContext from "./useUserContext";
+import { LatLng } from "@/pages/MapBuilder";
 
 export type GameData = {
   id: string;
   started_at: string;
+  ended_at: string;
   is_multiplayer: boolean;
   region: string;
   level: string;
@@ -23,6 +25,14 @@ type Props = {
   id: string;
 };
 
+export type UserGuesses = {
+  key: string;
+  guess: LatLng;
+  location: LatLng;
+  userChar: string;
+  userId: string;
+};
+
 export default function useGame({ id }: Props) {
   const { user } = useUserContext();
   const [game, setGame] = useState<GameData | null>(null);
@@ -30,13 +40,15 @@ export default function useGame({ id }: Props) {
   const [prevLocations, setPrevLocations] = useState<string[]>([]);
   const [location, setLocation] = useState<Location | null>(null);
   const [playerPoints, setPlayerPoints] = useState(5000);
+  const [userGuesses, setUserGuesses] = useState<UserGuesses[]>([]);
+
   const navigate = useNavigate();
 
   // Get game is called in component where the hook is used due to checks if mp games are started.
   const getGame = async () => {
     const { data, error } = await supabase
       .from("games")
-      .select("id, started_at, is_multiplayer, region, level")
+      .select("id, started_at, is_multiplayer, region, level, ended_at")
       .eq("id", id);
 
     if (error) {
@@ -123,13 +135,18 @@ export default function useGame({ id }: Props) {
     // Reset values, manly for image skeleton to shoe user new location is coming
     setLocation({ id: "", image_path: "", lat: 0, lng: 0 });
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("random_location")
       .select("id, image_path, lat, lng")
       .eq("level", game.level)
-      .eq("region", game.region)
       .not("id", "in", `(${prevLocations.join(",")})`)
       .limit(1);
+
+    if (game.region !== "all") {
+      query = query.eq("region", game.region);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast.error("Error getting new location");
@@ -176,6 +193,49 @@ export default function useGame({ id }: Props) {
     setPlayerPoints(data[0].points);
   };
 
+  const getAllPlayerGuesses = async () => {
+    const { data, error } = await supabase
+      .from("guesses")
+      .select(
+        "user_id, location_id, lat, lng, locations(lat, lng), profiles(username)",
+      )
+      .eq("game_id", id);
+
+    if (error) {
+      toast.error("Error getting player guesses");
+      return;
+    }
+
+    const guesses: UserGuesses[] = data.map((guess) => {
+      const { locations, profiles, lat, lng, location_id, user_id } = guess as {
+        [key: string]: any;
+      };
+
+      return {
+        key: location_id + user_id,
+        guess: { lat, lng },
+        location: { lat: locations.lat, lng: locations.lng },
+        userChar: profiles.username.charAt(0),
+        userId: user_id,
+      };
+    });
+
+    setUserGuesses(guesses);
+  };
+
+  const updateGameToEnded = async () => {
+    const { error } = await supabase
+      .from("games")
+      .update({ ended_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Error ending game", {
+        description: "Failed to update the game ended time.",
+      });
+    }
+  };
+
   return {
     game,
     round,
@@ -189,5 +249,8 @@ export default function useGame({ id }: Props) {
     getPrevLocations,
     getPlayerPoints,
     getCurrentGuess,
+    getAllPlayerGuesses,
+    userGuesses,
+    updateGameToEnded,
   };
 }
