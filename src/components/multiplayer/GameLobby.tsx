@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-type GameLobbyProps = {
+type Props = {
   users: Users[];
   presentUsers: string[];
 };
 
-export default function GameLobby({ users, presentUsers }: GameLobbyProps) {
+export default function GameLobby({ users, presentUsers }: Props) {
   const { id } = useParams() as { id: string };
   const { user } = useUserContext();
   const [isStarting, setIsStarting] = useState(false);

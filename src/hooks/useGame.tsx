@@ -1,10 +1,12 @@
 import supabase from "@/supabase/supabaseConfig";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import useUserContext from "./useUserContext";
 
 export type GameData = {
   id: string;
+  started_at: string;
   is_multiplayer: boolean;
   region: string;
   level: string;
@@ -17,7 +19,12 @@ export type Location = {
   lng: number;
 };
 
-export default function useGame({ id }: { id: string }) {
+type Props = {
+  id: string;
+};
+
+export default function useGame({ id }: Props) {
+  const { user } = useUserContext();
   const [game, setGame] = useState<GameData | null>(null);
   const [round, setRound] = useState(0);
   const [prevLocations, setPrevLocations] = useState<string[]>([]);
@@ -25,17 +32,11 @@ export default function useGame({ id }: { id: string }) {
   const [playerPoints, setPlayerPoints] = useState(5000);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!game) return;
-    getPrevLocations();
-    getPlayerPoints();
-  }, [game]);
-
   // Get game is called in component where the hook is used due to checks if mp games are started.
   const getGame = async () => {
     const { data, error } = await supabase
       .from("games")
-      .select("id, is_multiplayer, region, level")
+      .select("id, started_at, is_multiplayer, region, level")
       .eq("id", id);
 
     if (error) {
@@ -68,7 +69,6 @@ export default function useGame({ id }: { id: string }) {
     }
 
     if (!data.length) {
-      // No prev locations = first round, get new location
       getNewLocation();
       return;
     }
@@ -80,7 +80,7 @@ export default function useGame({ id }: { id: string }) {
   };
 
   const getCurrentLocation = async (locationId: string) => {
-    if (!game) return;
+    console.log("getting current location");
 
     const { data, error } = await supabase
       .from("locations")
@@ -98,6 +98,8 @@ export default function useGame({ id }: { id: string }) {
 
   const getNewLocation = async () => {
     if (!game) return;
+
+    console.log("gettingNewLocation");
 
     // Reset values, manly for image skeleton to shoe user new location is coming
     setLocation({ id: "", image_path: "", lat: 0, lng: 0 });
@@ -141,10 +143,12 @@ export default function useGame({ id }: { id: string }) {
       .from("guesses")
       .select("points")
       .eq("game_id", id)
+      .eq("user_id", user?.id)
       .order("created_at", { ascending: false })
       .limit(1);
 
     if (error) {
+      console.log(error);
       toast.error("Error while getting player pints");
       return;
     }
@@ -155,12 +159,16 @@ export default function useGame({ id }: { id: string }) {
   };
 
   return {
-    getGame,
     game,
     round,
     location,
     playerPoints,
     setPlayerPoints,
+    setRound,
+    getGame,
     getNewLocation,
+    getCurrentLocation,
+    getPrevLocations,
+    getPlayerPoints,
   };
 }

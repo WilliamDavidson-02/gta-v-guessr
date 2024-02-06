@@ -1,4 +1,4 @@
-import Map, { LocationMarker } from "../Map";
+import Map, { Cords, LocationMarker } from "../Map";
 import {
   Dispatch,
   SetStateAction,
@@ -22,16 +22,32 @@ import { Card, CardContent, CardFooter } from "../ui/card";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-type GameProps = {
+type GameProps = Cords & {
   location: Location | null;
   game: GameData | null;
   playerPoints: number;
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   getNewLocation: () => Promise<void>;
   round: number;
-};
+  showResults: boolean;
+  setShowResults: Dispatch<SetStateAction<boolean>>;
+  isGameOver: boolean;
+  setIsGameOver: Dispatch<SetStateAction<boolean>>;
+  isSubmitted: boolean;
+  setIsSubmitted: Dispatch<SetStateAction<boolean>>;
+} & (
+    | {
+        isMultiplayer: true;
+        hasPlayersGuessed: boolean;
+        isLeader: boolean;
+      }
+    | {
+        isMultiplayer: false;
+      }
+  );
 
 type UserGuesses = {
+  key: string;
   guess: LatLng;
   location: LatLng;
   userChar: string;
@@ -45,21 +61,27 @@ const flagIcon = icon({
 
 export const MAX_GAME_ROUNDS = 5;
 
-export default function Game({
-  location,
-  game,
-  playerPoints,
-  setPlayerPoints,
-  getNewLocation,
-  round,
-}: GameProps) {
+export default function Game(props: GameProps) {
+  const {
+    location,
+    game,
+    playerPoints,
+    setPlayerPoints,
+    getNewLocation,
+    round,
+    isMultiplayer,
+    cords,
+    setCords,
+    showResults,
+    setShowResults,
+    isGameOver,
+    setIsGameOver,
+    isSubmitted,
+    setIsSubmitted,
+  } = props;
   const resize = useResize();
   const { user } = useUserContext();
-  const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
   const [userGuesses, setUserGuesses] = useState<UserGuesses[]>([]);
   const userIcon = divIcon({
     html: user?.user_metadata.username.charAt(0),
@@ -155,7 +177,9 @@ export default function Game({
   const getAllPlayerGuesses = async () => {
     const { data, error } = await supabase
       .from("guesses")
-      .select("lat, lng, locations(lat, lng), profiles(username)")
+      .select(
+        "user_id, location_id, lat, lng, locations(lat, lng), profiles(username)",
+      )
       .eq("game_id", game?.id);
 
     if (error) {
@@ -164,10 +188,13 @@ export default function Game({
     }
 
     const guesses: UserGuesses[] = data.map((guess) => {
-      const { locations, profiles } = guess as { [key: string]: any };
+      const { locations, profiles, lat, lng, location_id, user_id } = guess as {
+        [key: string]: any;
+      };
 
       return {
-        guess: { lat: guess.lat, lng: guess.lng },
+        key: location_id + user_id,
+        guess: { lat, lng },
         location: { lat: locations.lat, lng: locations.lng },
         userChar: profiles.username.charAt(0),
       };
@@ -218,7 +245,18 @@ export default function Game({
                   <div className="text-blue-500">{formatDistance()}</div>
                 </CardContent>
                 <CardFooter>
-                  <Button onClick={handelNewLocation} className="w-full">
+                  <Button
+                    disabled={
+                      (isMultiplayer &&
+                        !props.hasPlayersGuessed &&
+                        round < MAX_GAME_ROUNDS) ||
+                      (isMultiplayer &&
+                        !props.isLeader &&
+                        round < MAX_GAME_ROUNDS)
+                    }
+                    onClick={handelNewLocation}
+                    className="w-full"
+                  >
                     {isNewLocationLoading ? (
                       <Loader2 className="animate-spin" size={20} />
                     ) : round >= MAX_GAME_ROUNDS || playerPoints === 0 ? (
@@ -248,7 +286,7 @@ export default function Game({
       <Map onResize={resize}>
         {isGameOver ? (
           userGuesses.map((userGuess) => (
-            <div key={Math.abs(userGuess.location.lat * userGuess.guess.lng)}>
+            <div key={userGuess.key}>
               <LocationMarker
                 cords={userGuess.guess}
                 setCords={setCords}

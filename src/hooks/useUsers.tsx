@@ -111,7 +111,9 @@ export default function useUsers({ id }: { id: string }) {
     });
 
     setUsers(formattedUsers);
+
+    return formattedUsers;
   };
 
-  return { users, presentUsers };
+  return { users, presentUsers, getUsers };
 }
