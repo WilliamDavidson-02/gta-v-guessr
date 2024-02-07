@@ -27,11 +27,12 @@ type GameProps = Cords & {
   hasPlayersGuessed: boolean;
   isLeader: boolean;
   userGuesses: UserGuesses[];
+  setUserGuesses: Dispatch<SetStateAction<UserGuesses[]>>;
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
   getNewLocation: () => Promise<void>;
-  getAllPlayerGuesses: () => Promise<void>;
+  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
   getCurrentGuess: (
     locationId: string,
     gameId: string,
@@ -66,6 +67,7 @@ export default function Game({
   getCurrentGuess,
   getAllPlayerGuesses,
   userGuesses,
+  setUserGuesses,
 }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
@@ -184,6 +186,7 @@ export default function Game({
                 setCords={setCords}
                 setIsGameOver={setIsGameOver}
                 setShowResults={setShowResults}
+                setUserGuesses={setUserGuesses}
                 getAllPlayerGuesses={getAllPlayerGuesses}
                 getNewLocation={getNewLocation}
                 isMultiplayer={isMultiplayer}
@@ -210,7 +213,8 @@ export default function Game({
         )}
       </div>
       <Map onResize={resize}>
-        {isGameOver ? (
+        {isGameOver ||
+        (isMultiplayer && userGuesses && showResults && hasPlayersGuessed) ? (
           userGuesses.map((userGuess) => (
             <div key={userGuess.key}>
               <LocationMarker

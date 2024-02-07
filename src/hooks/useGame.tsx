@@ -193,13 +193,20 @@ export default function useGame({ id }: Props) {
     setPlayerPoints(data[0].points);
   };
 
-  const getAllPlayerGuesses = async () => {
-    const { data, error } = await supabase
+  const getAllPlayerGuesses = async (locationId?: string) => {
+    let query = supabase
       .from("guesses")
       .select(
         "user_id, location_id, lat, lng, locations(lat, lng), profiles(username)",
       )
       .eq("game_id", id);
+
+    // Get both player guesses for mp of the set location
+    if (locationId) {
+      query = query.eq("location_id", locationId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast.error("Error getting player guesses");
@@ -243,6 +250,7 @@ export default function useGame({ id }: Props) {
     playerPoints,
     setPlayerPoints,
     setRound,
+    setUserGuesses,
     getGame,
     getNewLocation,
     getCurrentLocation,

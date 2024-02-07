@@ -4,8 +4,8 @@ import { Card, CardContent, CardFooter } from "../ui/card";
 import { MAX_GAME_ROUNDS } from "./Game";
 import { calcDistance } from "@/lib/utils";
 import { LatLng } from "@/pages/MapBuilder";
-import { GameData, Location } from "@/hooks/useGame";
-import { Dispatch, SetStateAction, useState } from "react";
+import { GameData, Location, UserGuesses } from "@/hooks/useGame";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 type Props = {
   game: GameData | null;
@@ -19,7 +19,8 @@ type Props = {
   setCords: Dispatch<SetStateAction<LatLng>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
-  getAllPlayerGuesses: () => Promise<void>;
+  setUserGuesses: Dispatch<SetStateAction<UserGuesses[]>>;
+  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
   getNewLocation: () => Promise<void>;
 };
 
@@ -37,8 +38,24 @@ export default function PointBoard({
   setShowResults,
   getAllPlayerGuesses,
   getNewLocation,
+  setUserGuesses,
 }: Props) {
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
+
+  useEffect(() => {
+    const getPlayerPointsForLocation = async () => {
+      if (!isMultiplayer || !location || !hasPlayersGuessed) return;
+
+      getAllPlayerGuesses(location.id);
+    };
+
+    getPlayerPointsForLocation();
+
+    return () => {
+      // Clean up userGuesses
+      setUserGuesses([]);
+    };
+  }, [hasPlayersGuessed, isMultiplayer, location]);
 
   const formatDistance = (): string => {
     if (!location) return "";

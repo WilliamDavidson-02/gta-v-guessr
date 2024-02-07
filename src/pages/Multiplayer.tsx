@@ -27,6 +27,7 @@ export default function Multiplayer() {
     userGuesses,
     setPlayerPoints,
     setRound,
+    setUserGuesses,
     getGame,
     getNewLocation,
     getCurrentLocation,
@@ -174,6 +175,7 @@ export default function Multiplayer() {
             getCurrentGuess={getCurrentGuess}
             getAllPlayerGuesses={getAllPlayerGuesses}
             userGuesses={userGuesses}
+            setUserGuesses={setUserGuesses}
           />
         ) : id ? (
           <GameLobby users={users} presentUsers={presentUsers} />
