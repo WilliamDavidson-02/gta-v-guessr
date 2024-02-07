@@ -11,9 +11,14 @@ import { Loader2 } from "lucide-react";
 type Props = {
   users: Users[];
   presentUsers: string[];
+  getNewLocation: () => Promise<void>;
 };
 
-export default function GameLobby({ users, presentUsers }: Props) {
+export default function GameLobby({
+  users,
+  presentUsers,
+  getNewLocation,
+}: Props) {
   const { id } = useParams() as { id: string };
   const { user } = useUserContext();
   const [isStarting, setIsStarting] = useState(false);
@@ -49,6 +54,8 @@ export default function GameLobby({ users, presentUsers }: Props) {
       .from("games")
       .update({ started_at: new Date().toISOString() })
       .eq("id", id);
+
+    await getNewLocation();
 
     setIsStarting(false);
 

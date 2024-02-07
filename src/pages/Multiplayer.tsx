@@ -68,6 +68,7 @@ export default function Multiplayer() {
         },
         (payload: { [key: string]: any }) => {
           getLocationOnUser(payload.new.location_id);
+          setHasPlayerGuessed(false);
         },
       )
       .on(
@@ -107,18 +108,16 @@ export default function Multiplayer() {
   }, [location, game, showResults]);
 
   useEffect(() => {
-    setHasPlayerGuessed(false);
-  }, [location]);
-
-  useEffect(() => {
     if (!game) return;
-    if (game.started_at) setIsGameStarted(true);
+    if (game.started_at) {
+      setIsGameStarted(true);
+      getPrevLocations();
+      getPlayerPoints();
+    }
     if (game.ended_at) {
       setIsGameOver(true);
       getAllPlayerGuesses();
     }
-    getPrevLocations();
-    getPlayerPoints();
   }, [game]);
 
   const getHasPlayersGuessed = async (locationId: string, gameId: string) => {
@@ -140,6 +139,7 @@ export default function Multiplayer() {
     }
   };
 
+  // Function is called when leader gets a new location
   const getLocationOnUser = async (location_id: string) => {
     const users = await getUsers();
     if (users && !isUserLeader(users, user)) {
@@ -176,7 +176,11 @@ export default function Multiplayer() {
             userGuesses={userGuesses}
           />
         ) : id ? (
-          <GameLobby users={users} presentUsers={presentUsers} />
+          <GameLobby
+            users={users}
+            presentUsers={presentUsers}
+            getNewLocation={getNewLocation}
+          />
         ) : (
           <>
             <GameCreation />

@@ -34,6 +34,7 @@ export default function useUsers({ id }: { id: string }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!id) return;
     getUsers();
 
     const lobbys = supabase.channel("lobbys", {
@@ -56,7 +57,13 @@ export default function useUsers({ id }: { id: string }) {
       .on(
         REALTIME_LISTEN_TYPES.PRESENCE,
         { event: REALTIME_PRESENCE_LISTEN_EVENTS.JOIN },
-        () => getUsers(),
+        (payload) => {
+          payload.newPresences.forEach((presence) => {
+            if (presence.user_id !== user?.id) {
+              getUsers();
+            }
+          });
+        },
       )
       .on(
         REALTIME_LISTEN_TYPES.PRESENCE,
@@ -90,7 +97,6 @@ export default function useUsers({ id }: { id: string }) {
 
   const getUsers = async () => {
     if (!id) return;
-
     const { data, error } = await supabase
       .from("user_game")
       .select("joined_at, profiles(id, username)")

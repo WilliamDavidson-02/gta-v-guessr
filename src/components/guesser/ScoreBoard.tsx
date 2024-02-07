@@ -102,12 +102,19 @@ export default function ScoreBoard({
         mappedUsers.push(user);
       });
 
-      if (isMultiplayer) {
+      if (isMultiplayer && mappedUsers.length) {
         setWinner(() => {
           const [playerA, playerB] = mappedUsers;
-          if (playerA.sum < playerB.sum) {
+          const getLastPoints = (player: Guesses[]): number => {
+            return player[player.length - 1].points;
+          };
+
+          const lastA = getLastPoints(playerA.guesses);
+          const lastB = getLastPoints(playerB.guesses);
+
+          if (playerA.sum < playerB.sum || lastA === 0) {
             return `Winner is ${playerB.username}!`;
-          } else if (playerA.sum > playerB.sum) {
+          } else if (playerA.sum > playerB.sum || lastB === 0) {
             return `Winner is ${playerA.username}!`;
           }
           return "Draw!";
