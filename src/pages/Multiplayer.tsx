@@ -41,7 +41,6 @@ export default function Multiplayer() {
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const startGameChanges = supabase.channel("game-state");
@@ -103,9 +102,9 @@ export default function Multiplayer() {
   }, [id]);
 
   useEffect(() => {
-    if (!location || !game || !isSubmitted) return;
+    if (!location || !game || !showResults) return;
     getHasPlayersGuessed(location.id, game.id);
-  }, [location, game, isSubmitted]);
+  }, [location, game, showResults]);
 
   useEffect(() => {
     setHasPlayerGuessed(false);
@@ -146,7 +145,6 @@ export default function Multiplayer() {
     if (users && !isUserLeader(users, user)) {
       setCords({ lat: 0, lng: 0 });
       setShowResults(false);
-      setIsSubmitted(false);
       setRound((prev) => prev + 1);
       getCurrentLocation(location_id);
     }
@@ -173,8 +171,6 @@ export default function Multiplayer() {
             setShowResults={setShowResults}
             isGameOver={isGameOver}
             setIsGameOver={setIsGameOver}
-            isSubmitted={isSubmitted}
-            setIsSubmitted={setIsSubmitted}
             getCurrentGuess={getCurrentGuess}
             getAllPlayerGuesses={getAllPlayerGuesses}
             userGuesses={userGuesses}

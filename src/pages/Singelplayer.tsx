@@ -25,7 +25,6 @@ export default function Singleplayer() {
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     getGame();
@@ -49,14 +48,14 @@ export default function Singleplayer() {
           getNewLocation={getNewLocation}
           round={round}
           isMultiplayer={false}
+          hasPlayersGuessed={true}
+          isLeader={true}
           cords={cords}
           setCords={setCords}
           showResults={showResults}
           setShowResults={setShowResults}
           isGameOver={isGameOver}
           setIsGameOver={setIsGameOver}
-          isSubmitted={isSubmitted}
-          setIsSubmitted={setIsSubmitted}
           getCurrentGuess={getCurrentGuess}
           getAllPlayerGuesses={getAllPlayerGuesses}
           userGuesses={userGuesses}

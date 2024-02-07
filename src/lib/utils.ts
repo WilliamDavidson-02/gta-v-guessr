@@ -1,4 +1,5 @@
 import { Users } from "@/hooks/useUsers";
+import { LatLng } from "@/pages/MapBuilder";
 import { User } from "@supabase/supabase-js";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -57,4 +58,12 @@ export function calculateArea(coordinates: number[][]) {
   }
 
   return Math.floor(Math.abs(area / 2));
+}
+
+export function calcDistance(cords: LatLng, location: LatLng): number {
+  const diffLng = cords.lng - location.lng;
+  const diffLat = cords.lat - location.lat;
+  const distance = Math.floor(Math.sqrt(diffLng * diffLng + diffLat * diffLat));
+
+  return distance;
 }

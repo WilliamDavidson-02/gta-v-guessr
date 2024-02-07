@@ -1,11 +1,5 @@
 import Map, { Cords, LocationMarker } from "../Map";
-import {
-  Dispatch,
-  SetStateAction,
-  startTransition,
-  useEffect,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, startTransition, useEffect } from "react";
 import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
@@ -15,12 +9,12 @@ import { Marker, Polyline } from "react-leaflet";
 import { divIcon, icon } from "leaflet";
 import useUserContext from "@/hooks/useUserContext";
 import seg from "../../lib/seg.json";
-import { calculateArea } from "@/lib/utils";
+import { calcDistance, calculateArea } from "@/lib/utils";
 import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
-import { Card, CardContent, CardFooter } from "../ui/card";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
 import { useNavigate } from "react-router-dom";
+import PointBoard from "./PointBoard";
 
 type GameProps = Cords & {
   round: number;
@@ -28,13 +22,14 @@ type GameProps = Cords & {
   location: Location | null;
   playerPoints: number;
   isGameOver: boolean;
-  isSubmitted: boolean;
   showResults: boolean;
+  isMultiplayer: boolean;
+  hasPlayersGuessed: boolean;
+  isLeader: boolean;
   userGuesses: UserGuesses[];
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
-  setIsSubmitted: Dispatch<SetStateAction<boolean>>;
   getNewLocation: () => Promise<void>;
   getAllPlayerGuesses: () => Promise<void>;
   getCurrentGuess: (
@@ -42,16 +37,7 @@ type GameProps = Cords & {
     gameId: string,
     userId: string,
   ) => Promise<LatLng | undefined>;
-} & (
-    | {
-        isMultiplayer: true;
-        hasPlayersGuessed: boolean;
-        isLeader: boolean;
-      }
-    | {
-        isMultiplayer: false;
-      }
-  );
+};
 
 const flagIcon = icon({
   iconUrl: "/flag_icon.svg",
@@ -61,30 +47,28 @@ const flagIcon = icon({
 
 export const MAX_GAME_ROUNDS = 5;
 
-export default function Game(props: GameProps) {
-  const {
-    location,
-    game,
-    playerPoints,
-    setPlayerPoints,
-    getNewLocation,
-    round,
-    isMultiplayer,
-    cords,
-    setCords,
-    showResults,
-    setShowResults,
-    isGameOver,
-    setIsGameOver,
-    isSubmitted,
-    setIsSubmitted,
-    getCurrentGuess,
-    getAllPlayerGuesses,
-    userGuesses,
-  } = props;
+export default function Game({
+  location,
+  game,
+  playerPoints,
+  setPlayerPoints,
+  getNewLocation,
+  round,
+  isMultiplayer,
+  hasPlayersGuessed,
+  isLeader,
+  cords,
+  setCords,
+  showResults,
+  setShowResults,
+  isGameOver,
+  setIsGameOver,
+  getCurrentGuess,
+  getAllPlayerGuesses,
+  userGuesses,
+}: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
-  const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,7 +87,6 @@ export default function Game(props: GameProps) {
       if (!currentGuess) return;
 
       setCords(currentGuess);
-      setIsSubmitted(true);
       setShowResults(true);
     };
 
@@ -120,19 +103,8 @@ export default function Game(props: GameProps) {
     });
   };
 
-  const calcDistance = (cords: LatLng, location: LatLng): number => {
-    const diffLng = cords.lng - location.lng;
-    const diffLat = cords.lat - location.lat;
-    const distance = Math.floor(
-      Math.sqrt(diffLng * diffLng + diffLat * diffLat),
-    );
-
-    return distance;
-  };
-
   const handelSubmitGuess = async () => {
     if (!location) return;
-    setIsSubmitted(true);
 
     let levelModifier;
     let score = playerPoints;
@@ -184,34 +156,6 @@ export default function Game(props: GameProps) {
     }
   };
 
-  const formatDistance = (): string => {
-    const distance = calcDistance(location!, cords);
-
-    if (distance >= 1000) {
-      return `${(distance / 1000).toFixed(1)}km`;
-    }
-
-    return `${distance}m`;
-  };
-
-  const handelNewLocation = async () => {
-    if (!game) return;
-    if (round >= MAX_GAME_ROUNDS || playerPoints === 0) {
-      getAllPlayerGuesses();
-      setIsGameOver(true);
-      return;
-    }
-
-    // Rest values
-    setCords({ lat: 0, lng: 0 });
-    setIsSubmitted(false);
-
-    setIsNewLocationLoading(true);
-    await getNewLocation();
-    setIsNewLocationLoading(false);
-    setShowResults(false);
-  };
-
   return (
     <div className="relative h-full w-full overflow-hidden rounded-md">
       <Card className="absolute right-4 top-4 z-20 border-none bg-background/40 backdrop-blur-sm">
@@ -230,48 +174,38 @@ export default function Game(props: GameProps) {
           </Button>
         ) : (
           <>
-            {showResults && (
-              <Card className="mb-2 border-none bg-background/40 backdrop-blur-sm">
-                <CardContent className="grid grid-cols-2 pt-6 text-center text-3xl font-semibold">
-                  <div className="text-yellow-500">{playerPoints}</div>
-                  <div className="text-blue-500">{formatDistance()}</div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    disabled={
-                      (isMultiplayer &&
-                        !props.hasPlayersGuessed &&
-                        round < MAX_GAME_ROUNDS) ||
-                      (isMultiplayer &&
-                        !props.isLeader &&
-                        round < MAX_GAME_ROUNDS)
-                    }
-                    onClick={handelNewLocation}
-                    className="w-full"
-                  >
-                    {isNewLocationLoading ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : round >= MAX_GAME_ROUNDS || playerPoints === 0 ? (
-                      "Show results"
-                    ) : (
-                      "Next"
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
+            {showResults ? (
+              <PointBoard
+                game={game}
+                location={location}
+                cords={cords}
+                round={round}
+                playerPoints={playerPoints}
+                setCords={setCords}
+                setIsGameOver={setIsGameOver}
+                setShowResults={setShowResults}
+                getAllPlayerGuesses={getAllPlayerGuesses}
+                getNewLocation={getNewLocation}
+                isMultiplayer={isMultiplayer}
+                hasPlayersGuessed={hasPlayersGuessed}
+                isLeader={isLeader}
+              />
+            ) : (
+              <>
+                <UploadImage
+                  className="drop-shadow-md"
+                  src={location ? location.image_path : ""}
+                />
+                <Button
+                  type="button"
+                  onClick={handelSubmitGuess}
+                  disabled={!cords.lat && !cords.lng}
+                  className="mt-2 w-full"
+                >
+                  Submit guess
+                </Button>
+              </>
             )}
-            <UploadImage
-              className="drop-shadow-md"
-              src={location ? location.image_path : ""}
-            />
-            <Button
-              type="button"
-              onClick={handelSubmitGuess}
-              disabled={(!cords.lat && !cords.lng) || isSubmitted}
-              className="mt-2 w-full"
-            >
-              Submit guess
-            </Button>
           </>
         )}
       </div>
@@ -307,9 +241,9 @@ export default function Game(props: GameProps) {
               cords={cords}
               setCords={setCords}
               icon={userIcon(user?.user_metadata.username.charAt(0))}
-              isPinned={isSubmitted}
+              isPinned={showResults}
             />
-            {isSubmitted && location && (
+            {showResults && location && (
               <>
                 <Polyline
                   color="#ffab00"
