@@ -30,7 +30,9 @@ export type UserGuesses = {
   guess: LatLng;
   location: LatLng;
   userChar: string;
+  username: string;
   userId: string;
+  points: number;
 };
 
 export default function useGame({ id }: Props) {
@@ -197,7 +199,7 @@ export default function useGame({ id }: Props) {
     let query = supabase
       .from("guesses")
       .select(
-        "user_id, location_id, lat, lng, locations(lat, lng), profiles(username)",
+        "user_id, location_id, lat, lng, points, locations(lat, lng), profiles(username)",
       )
       .eq("game_id", id);
 
@@ -214,16 +216,19 @@ export default function useGame({ id }: Props) {
     }
 
     const guesses: UserGuesses[] = data.map((guess) => {
-      const { locations, profiles, lat, lng, location_id, user_id } = guess as {
-        [key: string]: any;
-      };
+      const { locations, profiles, lat, lng, location_id, user_id, points } =
+        guess as {
+          [key: string]: any;
+        };
 
       return {
         key: location_id + user_id,
         guess: { lat, lng },
         location: { lat: locations.lat, lng: locations.lng },
         userChar: profiles.username.charAt(0),
+        username: profiles.username,
         userId: user_id,
+        points,
       };
     });
 

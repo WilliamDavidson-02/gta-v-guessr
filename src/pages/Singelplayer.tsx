@@ -15,7 +15,6 @@ export default function Singleplayer() {
     playerPoints,
     userGuesses,
     setPlayerPoints,
-    setUserGuesses,
     getGame,
     getNewLocation,
     getPrevLocations,
@@ -60,7 +59,6 @@ export default function Singleplayer() {
           getCurrentGuess={getCurrentGuess}
           getAllPlayerGuesses={getAllPlayerGuesses}
           userGuesses={userGuesses}
-          setUserGuesses={setUserGuesses}
         />
       </div>
     </Layout>

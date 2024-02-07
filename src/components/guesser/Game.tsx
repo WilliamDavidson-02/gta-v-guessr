@@ -1,5 +1,5 @@
 import Map, { Cords, LocationMarker } from "../Map";
-import { Dispatch, SetStateAction, startTransition, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
@@ -13,8 +13,9 @@ import { calcDistance, calculateArea } from "@/lib/utils";
 import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
 import { Card, CardContent } from "../ui/card";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import PointBoard from "./PointBoard";
+import ScoreBoard from "./ScoreBoard";
 
 type GameProps = Cords & {
   round: number;
@@ -27,7 +28,6 @@ type GameProps = Cords & {
   hasPlayersGuessed: boolean;
   isLeader: boolean;
   userGuesses: UserGuesses[];
-  setUserGuesses: Dispatch<SetStateAction<UserGuesses[]>>;
   setPlayerPoints: Dispatch<SetStateAction<number>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
@@ -67,11 +67,9 @@ export default function Game({
   getCurrentGuess,
   getAllPlayerGuesses,
   userGuesses,
-  setUserGuesses,
 }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!game) return;
@@ -168,12 +166,22 @@ export default function Game({
       </Card>
       <div className="absolute bottom-4 left-4 z-20 w-full max-w-[334px] md:max-w-[500px]">
         {isGameOver ? (
-          <Button
-            onClick={() => startTransition(() => navigate("/"))}
-            className="w-full"
-          >
-            Back to start
-          </Button>
+          <>
+            <ScoreBoard
+              isMultiplayer={isMultiplayer}
+              userGuesses={userGuesses}
+              getAllPlayerGuesses={getAllPlayerGuesses}
+            />
+            <Button className="w-full p-0">
+              <Link
+                to={isMultiplayer ? "/multiplayer" : "/"}
+                reloadDocument
+                className="w-full px-4 py-2 outline-none"
+              >
+                Back to start
+              </Link>
+            </Button>
+          </>
         ) : (
           <>
             {showResults ? (
@@ -183,15 +191,16 @@ export default function Game({
                 cords={cords}
                 round={round}
                 playerPoints={playerPoints}
+                userGuesses={userGuesses}
                 setCords={setCords}
                 setIsGameOver={setIsGameOver}
                 setShowResults={setShowResults}
-                setUserGuesses={setUserGuesses}
                 getAllPlayerGuesses={getAllPlayerGuesses}
                 getNewLocation={getNewLocation}
                 isMultiplayer={isMultiplayer}
                 hasPlayersGuessed={hasPlayersGuessed}
                 isLeader={isLeader}
+                isGameOver={isGameOver}
               />
             ) : (
               <>

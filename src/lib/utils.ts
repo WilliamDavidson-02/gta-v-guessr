@@ -67,3 +67,13 @@ export function calcDistance(cords: LatLng, location: LatLng): number {
 
   return distance;
 }
+
+export function formatDistance(cords: LatLng, location: LatLng): string {
+  const distance = calcDistance(cords, location);
+
+  if (distance >= 1000) {
+    return `${(distance / 1000).toFixed(1)}km`;
+  }
+
+  return `${distance}m`;
+}
