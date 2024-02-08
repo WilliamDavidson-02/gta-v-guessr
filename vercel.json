@@ -1,27 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/hash",
       "destination": "/api"
     },
     {
-      "source": "/",
-      "destination": "/"
+      "source": "/api/verify",
+      "destination": "/api"
     },
     {
-      "source": "/auth/(.*)",
-      "destination": "/"
-    },
-    {
-      "source": "^/singelplayer",
-      "destination": "/"
-    },
-    {
-      "source": "^/multiplayer",
-      "destination": "/"
-    },
-    {
-      "source": "^/admin",
+      "source": "/(.*)",
       "destination": "/"
     }
   ]
