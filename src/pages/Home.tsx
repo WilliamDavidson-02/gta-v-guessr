@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import GameCreation from "@/components/GameCreation";
 import GameTypeCard from "@/components/GameTypeCard";
 import GithubIcon from "@/components/GithubIcon";
@@ -85,6 +86,7 @@ export default function Home() {
           )}
         </section>
       </Layout>
+      <Footer />
     </>
   );
 }

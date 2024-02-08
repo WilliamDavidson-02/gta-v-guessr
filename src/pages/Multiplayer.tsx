@@ -14,6 +14,7 @@ import { isUserLeader } from "@/lib/utils";
 import useUserContext from "@/hooks/useUserContext";
 import { LatLng } from "./MapBuilder";
 import { toast } from "sonner";
+import Footer from "@/components/Footer";
 
 export default function Multiplayer() {
   const { id } = useParams() as { id: string };
@@ -153,44 +154,47 @@ export default function Multiplayer() {
   };
 
   return (
-    <Layout>
-      <Navigation />
-      <section className="flex h-[calc(100vh-96px)] flex-col gap-20">
-        {isGameStarted ? (
-          <Game
-            location={location}
-            game={game}
-            playerPoints={playerPoints}
-            setPlayerPoints={setPlayerPoints}
-            getNewLocation={getNewLocation}
-            round={round}
-            isMultiplayer={true}
-            hasPlayersGuessed={hasPlayersGuessed}
-            isLeader={isUserLeader(users, user)}
-            cords={cords}
-            setCords={setCords}
-            showResults={showResults}
-            setShowResults={setShowResults}
-            isGameOver={isGameOver}
-            setIsGameOver={setIsGameOver}
-            getCurrentGuess={getCurrentGuess}
-            getAllPlayerGuesses={getAllPlayerGuesses}
-            userGuesses={userGuesses}
-            updateGameToEnd={updateGameToEnded}
-          />
-        ) : id ? (
-          <GameLobby
-            users={users}
-            presentUsers={presentUsers}
-            getNewLocation={getNewLocation}
-          />
-        ) : (
-          <>
-            <GameCreation />
-            <GamesTable />
-          </>
-        )}
-      </section>
-    </Layout>
+    <>
+      <Layout>
+        <Navigation />
+        <section className="flex h-[calc(100vh-96px)] flex-col gap-20">
+          {isGameStarted ? (
+            <Game
+              location={location}
+              game={game}
+              playerPoints={playerPoints}
+              setPlayerPoints={setPlayerPoints}
+              getNewLocation={getNewLocation}
+              round={round}
+              isMultiplayer={true}
+              hasPlayersGuessed={hasPlayersGuessed}
+              isLeader={isUserLeader(users, user)}
+              cords={cords}
+              setCords={setCords}
+              showResults={showResults}
+              setShowResults={setShowResults}
+              isGameOver={isGameOver}
+              setIsGameOver={setIsGameOver}
+              getCurrentGuess={getCurrentGuess}
+              getAllPlayerGuesses={getAllPlayerGuesses}
+              userGuesses={userGuesses}
+              updateGameToEnd={updateGameToEnded}
+            />
+          ) : id ? (
+            <GameLobby
+              users={users}
+              presentUsers={presentUsers}
+              getNewLocation={getNewLocation}
+            />
+          ) : (
+            <>
+              <GameCreation />
+              <GamesTable />
+            </>
+          )}
+        </section>
+      </Layout>
+      <Footer />
+    </>
   );
 }
