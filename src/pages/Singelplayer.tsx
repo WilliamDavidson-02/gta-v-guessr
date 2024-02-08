@@ -21,6 +21,7 @@ export default function Singleplayer() {
     getPlayerPoints,
     getCurrentGuess,
     getAllPlayerGuesses,
+    updateGameToEnded,
   } = useGame({ id } as { id: string });
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
@@ -32,6 +33,10 @@ export default function Singleplayer() {
 
   useEffect(() => {
     if (!game) return;
+    if (game.ended_at) {
+      setIsGameOver(true);
+      getAllPlayerGuesses();
+    }
     getPrevLocations();
     getPlayerPoints();
   }, [game]);
@@ -59,6 +64,7 @@ export default function Singleplayer() {
           getCurrentGuess={getCurrentGuess}
           getAllPlayerGuesses={getAllPlayerGuesses}
           userGuesses={userGuesses}
+          updateGameToEnd={updateGameToEnded}
         />
       </div>
     </Layout>

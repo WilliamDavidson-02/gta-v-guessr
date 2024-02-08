@@ -26,6 +26,7 @@ export default function Multiplayer() {
     playerPoints,
     userGuesses,
     setPlayerPoints,
+    setLocation,
     setRound,
     getGame,
     getNewLocation,
@@ -146,6 +147,7 @@ export default function Multiplayer() {
       setCords({ lat: 0, lng: 0 });
       setShowResults(false);
       setRound((prev) => prev + 1);
+      setLocation(null);
       getCurrentLocation(location_id);
     }
   };
@@ -174,6 +176,7 @@ export default function Multiplayer() {
             getCurrentGuess={getCurrentGuess}
             getAllPlayerGuesses={getAllPlayerGuesses}
             userGuesses={userGuesses}
+            updateGameToEnd={updateGameToEnded}
           />
         ) : id ? (
           <GameLobby

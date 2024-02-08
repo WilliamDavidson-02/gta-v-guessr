@@ -23,6 +23,7 @@ type Props = {
   setShowResults: Dispatch<SetStateAction<boolean>>;
   getAllPlayerGuesses: (locationId?: string) => Promise<void>;
   getNewLocation: () => Promise<void>;
+  updateGameToEnd: () => Promise<void>;
 };
 
 export default function PointBoard({
@@ -41,6 +42,7 @@ export default function PointBoard({
   getNewLocation,
   userGuesses,
   isGameOver,
+  updateGameToEnd,
 }: Props) {
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
 
@@ -58,6 +60,7 @@ export default function PointBoard({
     if (!game) return;
     if (round >= MAX_GAME_ROUNDS || playerPoints === 0) {
       getAllPlayerGuesses();
+      updateGameToEnd();
       setIsGameOver(true);
       return;
     }

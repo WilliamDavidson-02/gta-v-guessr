@@ -70,7 +70,7 @@ export default function useGame({ id }: Props) {
   const getPrevLocations = async () => {
     const { data, error } = await supabase
       .from("game_location")
-      .select("location_id, created_at, ended_at")
+      .select("location_id, created_at")
       .order("created_at", { ascending: true })
       .eq("game_id", id);
 
@@ -94,6 +94,7 @@ export default function useGame({ id }: Props) {
   };
 
   const getCurrentLocation = async (locationId: string) => {
+    if (game && game.ended_at) return;
     const { data, error } = await supabase
       .from("locations")
       .select("id, image_path, lat, lng")
@@ -256,6 +257,7 @@ export default function useGame({ id }: Props) {
     setPlayerPoints,
     setRound,
     setUserGuesses,
+    setLocation,
     getGame,
     getNewLocation,
     getCurrentLocation,

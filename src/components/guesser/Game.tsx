@@ -38,6 +38,7 @@ type GameProps = Cords & {
     gameId: string,
     userId: string,
   ) => Promise<LatLng | undefined>;
+  updateGameToEnd: () => Promise<void>;
 };
 
 const flagIcon = icon({
@@ -67,6 +68,7 @@ export default function Game({
   getCurrentGuess,
   getAllPlayerGuesses,
   userGuesses,
+  updateGameToEnd,
 }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
@@ -201,6 +203,7 @@ export default function Game({
                 hasPlayersGuessed={hasPlayersGuessed}
                 isLeader={isLeader}
                 isGameOver={isGameOver}
+                updateGameToEnd={updateGameToEnd}
               />
             ) : (
               <>

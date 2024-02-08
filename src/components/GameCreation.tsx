@@ -180,9 +180,6 @@ export default function GameCreation() {
           <div>
             <CardHeader>
               <CardTitle>Select a difficulty level</CardTitle>
-              <CardDescription>
-                The level effects picture, time limit and point scoring
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
