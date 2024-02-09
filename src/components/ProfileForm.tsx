@@ -2,12 +2,20 @@ import useUserContext from "@/hooks/useUserContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ChangeEvent, DragEvent, useState } from "react";
 import { cn, getImageUrl, kebabCase, validateFileType } from "@/lib/utils";
 import { toast } from "sonner";
 import supabase from "@/supabase/supabaseConfig";
+import { Input } from "./ui/input";
 
 const profileSchema = z.object({
   avatar_url: z.optional(z.instanceof(File)),
@@ -20,6 +28,7 @@ const acceptedFileTypes =
 export default function ProfileForm() {
   const { user, setUser } = useUserContext();
   const [isDragActive, setIsDragActive] = useState(false);
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -134,9 +143,46 @@ export default function ProfileForm() {
     setIsDragActive(false);
   };
 
+  const handelSubmit = (values: z.infer<typeof profileSchema>) => {
+    if (timer) {
+      clearTimeout(timer);
+      setTimer(null);
+    }
+    const profilePromise = new Promise(async (resolve, reject) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ username: values.username.trim() })
+        .eq("id", user?.id);
+
+      if (error) {
+        reject("Error updating profile");
+        return;
+      }
+
+      resolve(null);
+    });
+
+    toast.promise(profilePromise, {
+      loading: "Updating profile",
+      success: "Profile updated successfully",
+      error: (error: string) => error,
+    });
+  };
+
+  const handleInputChange = () => {
+    if (timer) clearTimeout(timer);
+
+    setTimer(
+      setTimeout(async () => {
+        const isValid = await form.trigger();
+        if (isValid) handelSubmit(form.getValues());
+      }, 1000),
+    );
+  };
+
   return (
     <Form {...form}>
-      <form className="w-fit">
+      <form onSubmit={form.handleSubmit(handelSubmit)} className="w-fit">
         <FormField
           control={form.control}
           name="avatar_url"
@@ -173,6 +219,27 @@ export default function ProfileForm() {
                     />
                   </div>
                 </label>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field: { onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input
+                  onChange={(ev) => {
+                    onChange(ev);
+                    handleInputChange();
+                  }}
+                  autoComplete="off"
+                  {...rest}
+                  placeholder="username"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
