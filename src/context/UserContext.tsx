@@ -1,8 +1,17 @@
-import { ReactNode, createContext, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  createContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { User } from "@supabase/supabase-js";
 import supabase from "@/supabase/supabaseConfig";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getImageUrl } from "@/lib/utils";
 
 type SignInCredentials = {
   email: string;
@@ -17,6 +26,7 @@ type SignUpCredentials = {
 
 type UserContext = {
   user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
   signInWithPassword: (credentials: SignInCredentials) => Promise<void>;
   signUp: (credentials: SignUpCredentials) => Promise<void>;
   signOut: () => Promise<void>;
@@ -51,6 +61,8 @@ export default function UserContextProvider({
           "Error while getting additional user meta data, please try again.",
       });
     }
+
+    data![0].avatar_url = getImageUrl("avatar", data![0].avatar_url);
 
     return { user_metadata: data![0], profileError: error };
   };
@@ -141,6 +153,7 @@ export default function UserContextProvider({
     <UserContext.Provider
       value={{
         user,
+        setUser,
         signInWithPassword,
         signUp,
         signOut,

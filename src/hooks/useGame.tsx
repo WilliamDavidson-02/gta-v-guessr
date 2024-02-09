@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useUserContext from "./useUserContext";
 import { LatLng } from "@/pages/MapBuilder";
+import { getImageUrl } from "@/lib/utils";
 
 export type GameData = {
   id: string;
@@ -105,7 +106,7 @@ export default function useGame({ id }: Props) {
       return;
     }
 
-    data[0].image_path = await getImageUrl(data[0].image_path);
+    data[0].image_path = getImageUrl("image_views", data[0].image_path);
     setLocation(data[0]);
   };
 
@@ -168,13 +169,8 @@ export default function useGame({ id }: Props) {
       return;
     }
 
-    data[0].image_path = await getImageUrl(data[0].image_path);
+    data[0].image_path = getImageUrl("image_views", data[0].image_path);
     setLocation(data[0]);
-  };
-
-  const getImageUrl = async (path: string): Promise<string> => {
-    const { data } = supabase.storage.from("image_views").getPublicUrl(path);
-    return data.publicUrl;
   };
 
   const getPlayerPoints = async () => {

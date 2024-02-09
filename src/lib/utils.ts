@@ -1,5 +1,6 @@
 import { Users } from "@/hooks/useUsers";
 import { LatLng } from "@/pages/MapBuilder";
+import supabase from "@/supabase/supabaseConfig";
 import { User } from "@supabase/supabase-js";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -76,4 +77,9 @@ export function formatDistance(cords: LatLng, location: LatLng): string {
   }
 
   return `${distance}m`;
+}
+
+export function getImageUrl(from: string, path: string): string {
+  const { data } = supabase.storage.from(from).getPublicUrl(path);
+  return data.publicUrl;
 }

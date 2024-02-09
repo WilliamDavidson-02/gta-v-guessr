@@ -12,6 +12,7 @@ const Singelplayer = lazy(() => import("./pages/Singelplayer"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Multiplayer = lazy(() => import("./pages/Multiplayer"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route element={<PrivateRoutes />}>
             <Route path="/singelplayer/:id" element={<Singelplayer />} />
             <Route path="/multiplayer/:id?" element={<Multiplayer />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<Admin />}>

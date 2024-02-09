@@ -293,11 +293,9 @@ const LocationForm = forwardRef<HTMLInputElement, LocationFormProps>(
     const handleDrag = (ev: DragEvent<HTMLFormElement | HTMLDivElement>) => {
       ev.preventDefault();
 
-      const { type } = ev;
-
-      if (type === "dragenter" || type === "dragover") {
+      if (ev.type === "dragenter" || ev.type === "dragover") {
         setDragActive(true);
-      } else if (type === "dragleave") {
+      } else if (ev.type === "dragleave") {
         setDragActive(false);
       }
     };

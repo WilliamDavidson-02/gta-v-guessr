@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import useUserContext from "@/hooks/useUserContext";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export default function Navigation() {
   const { user, signOut } = useUserContext();
@@ -17,7 +18,7 @@ export default function Navigation() {
   return (
     <nav className="flex w-full items-center justify-between py-6">
       <Link to="/" reloadDocument>
-        <img className="w-12" src="/gta_v_icon.svg" alt="Gta v logo" />
+        <img className="w-10" src="/gta-v-icon.svg" alt="GtaV GeoGuessr" />
       </Link>
       {!user ? (
         <Link to="/auth/login" reloadDocument>
@@ -26,7 +27,12 @@ export default function Navigation() {
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">{user.user_metadata.username}</Button>
+            <Avatar className="cursor-pointer">
+              <AvatarImage src={user.user_metadata.avatar_url} />
+              <AvatarFallback className="uppercase">
+                {user?.user_metadata.username.substring(0, 2)}
+              </AvatarFallback>
+            </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="mx-6 w-64">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -43,7 +49,7 @@ export default function Navigation() {
             <DropdownMenuItem className="cursor-pointer">
               <Link
                 className="flex w-full items-center gap-2"
-                to="/"
+                to="/settings"
                 reloadDocument
               >
                 <Settings size={16} />
