@@ -1,4 +1,3 @@
-import Layout from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
@@ -9,11 +8,11 @@ export default function Auth() {
   const navigate = useNavigate();
 
   return (
-    <Layout className="flex h-screen items-center justify-center">
+    <div className="flex h-[calc(100vh-96px)] items-center justify-center">
       <Tabs
+        className="w-full max-w-[500px]"
         defaultValue={form}
         onValueChange={(ev) => navigate(`/auth/${ev}`)}
-        className="mx-auto w-full max-w-[500px]"
       >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger className="p-0" value="login">
@@ -34,6 +33,6 @@ export default function Auth() {
           <RegisterForm />
         </TabsContent>
       </Tabs>
-    </Layout>
+    </div>
   );
 }

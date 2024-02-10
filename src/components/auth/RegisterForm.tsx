@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import useUserContext from "@/hooks/useUserContext";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowBigLeft } from "lucide-react";
+import { ArrowBigLeft, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import * as z from "zod";
@@ -31,6 +32,7 @@ const registerSchema = z.object({
 
 export default function RegisterForm() {
   const { signUp } = useUserContext();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -40,6 +42,12 @@ export default function RegisterForm() {
     },
   });
 
+  const handelRegister = async (values: z.infer<typeof registerSchema>) => {
+    setIsLoading(true);
+    await signUp(values);
+    setIsLoading(false);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -48,7 +56,7 @@ export default function RegisterForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(signUp)}>
+          <form onSubmit={form.handleSubmit(handelRegister)}>
             <FormField
               control={form.control}
               name="username"
@@ -96,7 +104,7 @@ export default function RegisterForm() {
               )}
             />
             <div className="mt-4 grid grid-cols-2 gap-4">
-              <Link to="/" reloadDocument>
+              <Link to="/">
                 <Button
                   className="w-full"
                   type="button"
@@ -106,7 +114,9 @@ export default function RegisterForm() {
                   <ArrowBigLeft />
                 </Button>
               </Link>
-              <Button type="submit">Register</Button>
+              <Button type="submit">
+                {isLoading ? <Loader2 className="animate-spin" /> : "Register"}
+              </Button>
             </div>
           </form>
         </Form>

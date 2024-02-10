@@ -1,5 +1,3 @@
-import Layout from "@/components/Layout";
-import Navigation from "@/components/Navigation";
 import Game from "@/components/guesser/Game";
 import useGame from "@/hooks/useGame";
 import { useEffect, useState } from "react";
@@ -42,31 +40,28 @@ export default function Singleplayer() {
   }, [game]);
 
   return (
-    <Layout>
-      <Navigation />
-      <div className="h-[calc(100vh-96px)]">
-        <Game
-          location={location}
-          game={game}
-          playerPoints={playerPoints}
-          setPlayerPoints={setPlayerPoints}
-          getNewLocation={getNewLocation}
-          round={round}
-          isMultiplayer={false}
-          hasPlayersGuessed={true}
-          isLeader={true}
-          cords={cords}
-          setCords={setCords}
-          showResults={showResults}
-          setShowResults={setShowResults}
-          isGameOver={isGameOver}
-          setIsGameOver={setIsGameOver}
-          getCurrentGuess={getCurrentGuess}
-          getAllPlayerGuesses={getAllPlayerGuesses}
-          userGuesses={userGuesses}
-          updateGameToEnd={updateGameToEnded}
-        />
-      </div>
-    </Layout>
+    <section className="h-[calc(100vh-96px)]">
+      <Game
+        location={location}
+        game={game}
+        playerPoints={playerPoints}
+        setPlayerPoints={setPlayerPoints}
+        getNewLocation={getNewLocation}
+        round={round}
+        isMultiplayer={false}
+        hasPlayersGuessed={true}
+        isLeader={true}
+        cords={cords}
+        setCords={setCords}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        isGameOver={isGameOver}
+        setIsGameOver={setIsGameOver}
+        getCurrentGuess={getCurrentGuess}
+        getAllPlayerGuesses={getAllPlayerGuesses}
+        userGuesses={userGuesses}
+        updateGameToEnd={updateGameToEnded}
+      />
+    </section>
   );
 }

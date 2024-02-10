@@ -136,10 +136,12 @@ export default function UserContextProvider({
         data: { username },
       },
     });
+
     if (error) {
       toast.error("Failed Registration: Pleas try again.");
       return;
     }
+
     setUser(data.user);
     navigate("/");
   };

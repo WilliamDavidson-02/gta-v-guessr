@@ -72,78 +72,73 @@ export default function MapBuilder() {
   };
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden">
-      <section className="h-full">
-        <ResizablePanelGroup
-          className="rounded-md border"
-          direction="horizontal"
-        >
-          <ResizablePanel>
-            <LocationForm
-              image={image}
-              setImage={setImage}
-              activeLocation={activeLocation}
-              setActiveLocation={setActiveLocation}
-              cords={cords}
-              setCords={setCords}
-              setLocations={setLocations}
-            />
-          </ResizablePanel>
-          <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
-          <ResizablePanel onResize={(size) => setMapResize(size)}>
-            <Suspense
-              fallback={<Skeleton className="h-full w-full rounded-none" />}
-            >
-              <div className="relative h-full w-full">
-                <div className="absolute right-3 top-3 z-20 flex items-center justify-center gap-4 rounded-md border border-border bg-background p-2">
-                  <Label htmlFor="show-areas">Toggle regions</Label>
-                  <Switch
-                    id="show-areas"
-                    defaultChecked={showGeoAreas}
-                    onCheckedChange={(check) => setShowGeoAreas(check)}
-                  />
-                </div>
-                <Map onResize={mapResize}>
-                  <>
-                    <LocationMarker cords={cords} setCords={setCords} />
-                    <GeoJSON
-                      data={regions}
-                      style={(feature) => {
-                        if (!showGeoAreas) {
-                          return { opacity: 0, fillOpacity: 0 };
-                        }
-                        return {
-                          weight: 2,
-                          color: feature?.properties.color,
-                          fillColor: feature?.properties.fillColor,
-                          opacity: 1,
-                          fillOpacity: 0.5,
-                        };
-                      }}
-                    />
-                    {locations.map((location) => {
-                      const { lat, lng } = location;
-                      return (
-                        <Marker
-                          key={location.id}
-                          position={{ lat, lng }}
-                          eventHandlers={{
-                            click: () => {
-                              setActiveLocation(location);
-                              setCords({ lat, lng });
-                              getImageFile(location.image_path);
-                            },
-                          }}
-                        />
-                      );
-                    })}
-                  </>
-                </Map>
+    <section className="h-full">
+      <ResizablePanelGroup className="rounded-md border" direction="horizontal">
+        <ResizablePanel>
+          <LocationForm
+            image={image}
+            setImage={setImage}
+            activeLocation={activeLocation}
+            setActiveLocation={setActiveLocation}
+            cords={cords}
+            setCords={setCords}
+            setLocations={setLocations}
+          />
+        </ResizablePanel>
+        <ResizableHandle className="border transition-colors duration-300 hover:border-white active:border-white" />
+        <ResizablePanel onResize={(size) => setMapResize(size)}>
+          <Suspense
+            fallback={<Skeleton className="h-full w-full rounded-none" />}
+          >
+            <div className="relative h-full w-full">
+              <div className="absolute right-3 top-3 z-20 flex items-center justify-center gap-4 rounded-md border border-border bg-background p-2">
+                <Label htmlFor="show-areas">Toggle regions</Label>
+                <Switch
+                  id="show-areas"
+                  defaultChecked={showGeoAreas}
+                  onCheckedChange={(check) => setShowGeoAreas(check)}
+                />
               </div>
-            </Suspense>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </section>
-    </div>
+              <Map onResize={mapResize}>
+                <>
+                  <LocationMarker cords={cords} setCords={setCords} />
+                  <GeoJSON
+                    data={regions}
+                    style={(feature) => {
+                      if (!showGeoAreas) {
+                        return { opacity: 0, fillOpacity: 0 };
+                      }
+                      return {
+                        weight: 2,
+                        color: feature?.properties.color,
+                        fillColor: feature?.properties.fillColor,
+                        opacity: 1,
+                        fillOpacity: 0.5,
+                      };
+                    }}
+                  />
+                  {locations.map((location) => {
+                    const { lat, lng } = location;
+                    return (
+                      <Marker
+                        key={location.id}
+                        position={{ lat, lng }}
+                        eventHandlers={{
+                          click: () => {
+                            setActiveLocation(location);
+                            setCords({ lat, lng });
+                            getImageFile(location.image_path);
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </>
+              </Map>
+            </div>
+          </Suspense>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </section>
   );
 }

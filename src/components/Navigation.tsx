@@ -11,17 +11,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Skeleton } from "./ui/skeleton";
 
 export default function Navigation() {
-  const { user, signOut } = useUserContext();
+  const { user, signOut, isLoading } = useUserContext();
 
   return (
     <nav className="flex w-full items-center justify-between py-6">
-      <Link to="/" reloadDocument>
+      <Link to="/">
         <img className="w-10" src="/gta-v-icon.svg" alt="GtaV GeoGuessr" />
       </Link>
-      {!user ? (
-        <Link to="/auth/login" reloadDocument>
+      {!user && isLoading ? (
+        <Skeleton className="h-10 w-16" />
+      ) : !user ? (
+        <Link to="/auth/login">
           <Button>Login</Button>
         </Link>
       ) : (
@@ -40,30 +43,26 @@ export default function Navigation() {
               <>
                 <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem className="cursor-pointer">
-                  <Link className="w-full" to="/admin" reloadDocument>
+                  <Link className="w-full" to="/admin">
                     Admin
                   </Link>
                 </DropdownMenuItem>
               </>
             )}
             <DropdownMenuItem className="cursor-pointer">
-              <Link
-                className="flex w-full items-center gap-2"
-                to="/settings"
-                reloadDocument
-              >
+              <Link className="flex w-full items-center gap-2" to="/settings">
                 <Settings size={16} />
                 <span>Settings</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem className="cursor-pointer">
-              <Link className="w-full" to="/" reloadDocument>
+              <Link className="w-full" to="/">
                 Single player
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">
-              <Link className="w-full" to="/multiplayer" reloadDocument>
+              <Link className="w-full" to="/multiplayer">
                 Multiplayer
               </Link>
             </DropdownMenuItem>

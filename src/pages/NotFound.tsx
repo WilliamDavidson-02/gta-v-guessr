@@ -5,7 +5,7 @@ export default function NotFound() {
     <div>
       <h1>Page not Found!</h1>
       <p>Pleas return back to home page</p>
-      <Link to="/" replace reloadDocument>
+      <Link to="/" replace>
         Home
       </Link>
     </div>

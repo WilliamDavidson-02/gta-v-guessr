@@ -5,6 +5,7 @@ import UserContextProvider from "./context/UserContext";
 import AdminStats from "./pages/AdminStats";
 import MapBuilder from "./pages/MapBuilder";
 import { Toaster } from "@/components/ui/sonner";
+import Layout from "./components/Layout";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -18,22 +19,24 @@ export default function App() {
   return (
     <BrowserRouter>
       <UserContextProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth/:form" element={<Auth />} />
-          <Route element={<PrivateRoutes />}>
-            <Route path="/singelplayer/:id" element={<Singelplayer />} />
-            <Route path="/multiplayer/:id?" element={<Multiplayer />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-          <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<Admin />}>
-              <Route index element={<AdminStats />} />
-              <Route path="build" element={<MapBuilder />} />
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth/:form" element={<Auth />} />
+            <Route element={<PrivateRoutes />}>
+              <Route path="/singelplayer/:id" element={<Singelplayer />} />
+              <Route path="/multiplayer/:id?" element={<Multiplayer />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<Admin />}>
+                <Route index element={<AdminStats />} />
+                <Route path="build" element={<MapBuilder />} />
+              </Route>
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
         <Toaster />
       </UserContextProvider>
     </BrowserRouter>

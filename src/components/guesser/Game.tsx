@@ -177,7 +177,6 @@ export default function Game({
             <Button className="w-full p-0">
               <Link
                 to={isMultiplayer ? "/multiplayer" : "/"}
-                reloadDocument
                 className="w-full px-4 py-2 outline-none"
               >
                 Back to start
