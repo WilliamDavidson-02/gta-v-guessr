@@ -16,6 +16,7 @@ import { cn, getImageUrl, kebabCase, validateFileType } from "@/lib/utils";
 import { toast } from "sonner";
 import supabase from "@/supabase/supabaseConfig";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 const profileSchema = z.object({
   avatar_url: z.optional(z.instanceof(File)),
@@ -148,15 +149,29 @@ export default function ProfileForm() {
       clearTimeout(timer);
       setTimer(null);
     }
+    if (values.username === user?.user_metadata.username) return;
     const profilePromise = new Promise(async (resolve, reject) => {
+      const newUsername = values.username.trim();
+
       const { error } = await supabase
         .from("profiles")
-        .update({ username: values.username.trim() })
+        .update({ username: newUsername })
         .eq("id", user?.id);
 
       if (error) {
         reject("Error updating profile");
         return;
+      }
+
+      if (user) {
+        const updatedProfile = {
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            username: newUsername,
+          },
+        };
+        setUser(updatedProfile);
       }
 
       resolve(null);
@@ -182,7 +197,7 @@ export default function ProfileForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handelSubmit)} className="w-fit">
+      <form onSubmit={form.handleSubmit(handelSubmit)}>
         <FormField
           control={form.control}
           name="avatar_url"
@@ -198,7 +213,7 @@ export default function ProfileForm() {
                   >
                     <Avatar
                       className={cn(
-                        "h-64 w-64 cursor-pointer border-2 border-transparent transition-colors duration-300",
+                        "mx-auto h-64 w-64 cursor-pointer border-2 border-transparent transition-colors duration-300",
                         { "border-primary": isDragActive },
                       )}
                     >
@@ -245,6 +260,15 @@ export default function ProfileForm() {
             </FormItem>
           )}
         />
+        <Button
+          disabled={
+            !form.formState.isValid ||
+            form.getValues("username") === user?.user_metadata.username
+          }
+          className="mt-2 w-full"
+        >
+          Submit
+        </Button>
       </form>
     </Form>
   );
