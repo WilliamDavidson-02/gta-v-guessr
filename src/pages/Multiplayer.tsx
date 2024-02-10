@@ -7,11 +7,11 @@ import supabase from "@/supabase/supabaseConfig";
 import { useEffect, useState } from "react";
 import Game from "@/components/guesser/Game";
 import useUsers from "@/hooks/useUsers";
-import useGame from "@/hooks/useGame";
 import { isUserLeader } from "@/lib/utils";
 import useUserContext from "@/hooks/useUserContext";
 import { LatLng } from "./MapBuilder";
 import { toast } from "sonner";
+import useGameContext from "@/hooks/useGameContext";
 
 export default function Multiplayer() {
   const { id } = useParams() as { id: string };
@@ -19,22 +19,16 @@ export default function Multiplayer() {
   const { users, presentUsers, getUsers } = useUsers({ id });
   const {
     game,
-    round,
     location,
-    playerPoints,
-    userGuesses,
-    setPlayerPoints,
     setLocation,
     setRound,
     getGame,
-    getNewLocation,
     getCurrentLocation,
     getPrevLocations,
     getPlayerPoints,
-    getCurrentGuess,
     getAllPlayerGuesses,
-    updateGameToEnded,
-  } = useGame({ id });
+    updateGameToEnd,
+  } = useGameContext();
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [hasPlayersGuessed, setHasPlayerGuessed] = useState(false);
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
@@ -81,7 +75,7 @@ export default function Multiplayer() {
         (payload: { [key: string]: any }) => {
           if (payload.new.points === 0) {
             setIsGameOver(true);
-            updateGameToEnded();
+            updateGameToEnd();
             if (payload.new.user_id !== user?.id) {
               getAllPlayerGuesses();
             }
@@ -151,15 +145,9 @@ export default function Multiplayer() {
   };
 
   return (
-    <section className="flex flex-col gap-20">
+    <section className="flex h-[calc(100vh-96px)] flex-col gap-20">
       {isGameStarted ? (
         <Game
-          location={location}
-          game={game}
-          playerPoints={playerPoints}
-          setPlayerPoints={setPlayerPoints}
-          getNewLocation={getNewLocation}
-          round={round}
           isMultiplayer={true}
           hasPlayersGuessed={hasPlayersGuessed}
           isLeader={isUserLeader(users, user)}
@@ -169,17 +157,9 @@ export default function Multiplayer() {
           setShowResults={setShowResults}
           isGameOver={isGameOver}
           setIsGameOver={setIsGameOver}
-          getCurrentGuess={getCurrentGuess}
-          getAllPlayerGuesses={getAllPlayerGuesses}
-          userGuesses={userGuesses}
-          updateGameToEnd={updateGameToEnded}
         />
       ) : id ? (
-        <GameLobby
-          users={users}
-          presentUsers={presentUsers}
-          getNewLocation={getNewLocation}
-        />
+        <GameLobby users={users} presentUsers={presentUsers} />
       ) : (
         <>
           <GameCreation />

@@ -6,17 +6,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { UserGuesses } from "@/hooks/useGame";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { formatDistance } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { LatLng } from "@/pages/MapBuilder";
 import useUserContext from "@/hooks/useUserContext";
+import useGameContext from "@/hooks/useGameContext";
 
 type Props = {
   isMultiplayer: boolean;
-  userGuesses: UserGuesses[];
-  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
 };
 
 type ScoreProps = {
@@ -60,12 +58,9 @@ function UserScore({ userGuesses, sum }: ScoreProps) {
   );
 }
 
-export default function ScoreBoard({
-  isMultiplayer,
-  userGuesses,
-  getAllPlayerGuesses,
-}: Props) {
+export default function ScoreBoard({ isMultiplayer }: Props) {
   const { user } = useUserContext();
+  const { userGuesses, getAllPlayerGuesses } = useGameContext();
   const [usersScores, setUsersScores] = useState<UsersScores[]>([]);
   const [winner, setWinner] = useState("");
 
@@ -105,8 +100,8 @@ export default function ScoreBoard({
       if (isMultiplayer && mappedUsers.length) {
         setWinner(() => {
           const [playerA, playerB] = mappedUsers;
-          const getLastPoints = (player: Guesses[]): number => {
-            return player[player.length - 1].points;
+          const getLastPoints = (guesses: Guesses[]): number => {
+            return guesses[guesses.length - 1].points;
           };
 
           const lastA = getLastPoints(playerA.guesses);

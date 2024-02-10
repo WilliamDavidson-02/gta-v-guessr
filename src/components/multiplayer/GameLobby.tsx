@@ -7,20 +7,17 @@ import supabase from "@/supabase/supabaseConfig";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import useGameContext from "@/hooks/useGameContext";
 
 type Props = {
   users: Users[];
   presentUsers: string[];
-  getNewLocation: () => Promise<void>;
 };
 
-export default function GameLobby({
-  users,
-  presentUsers,
-  getNewLocation,
-}: Props) {
+export default function GameLobby({ users, presentUsers }: Props) {
   const { id } = useParams() as { id: string };
   const { user } = useUserContext();
+  const { getNewLocation } = useGameContext();
   const [isStarting, setIsStarting] = useState(false);
   const navigate = useNavigate();
 

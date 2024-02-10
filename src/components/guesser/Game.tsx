@@ -1,10 +1,8 @@
 import Map, { Cords, LocationMarker } from "../Map";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { LatLng } from "@/pages/MapBuilder";
 import useResize from "@/hooks/useResize";
 import { UploadImage } from "../UploadImage";
 import { Button } from "../ui/button";
-import { GameData, Location, UserGuesses } from "@/hooks/useGame";
 import { Marker, Polyline } from "react-leaflet";
 import { divIcon, icon } from "leaflet";
 import useUserContext from "@/hooks/useUserContext";
@@ -16,29 +14,16 @@ import { Card, CardContent } from "../ui/card";
 import { Link } from "react-router-dom";
 import PointBoard from "./PointBoard";
 import ScoreBoard from "./ScoreBoard";
+import useGameContext from "@/hooks/useGameContext";
 
 type GameProps = Cords & {
-  round: number;
-  game: GameData | null;
-  location: Location | null;
-  playerPoints: number;
   isGameOver: boolean;
   showResults: boolean;
   isMultiplayer: boolean;
   hasPlayersGuessed: boolean;
   isLeader: boolean;
-  userGuesses: UserGuesses[];
-  setPlayerPoints: Dispatch<SetStateAction<number>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
-  getNewLocation: () => Promise<void>;
-  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
-  getCurrentGuess: (
-    locationId: string,
-    gameId: string,
-    userId: string,
-  ) => Promise<LatLng | undefined>;
-  updateGameToEnd: () => Promise<void>;
 };
 
 const flagIcon = icon({
@@ -50,12 +35,6 @@ const flagIcon = icon({
 export const MAX_GAME_ROUNDS = 5;
 
 export default function Game({
-  location,
-  game,
-  playerPoints,
-  setPlayerPoints,
-  getNewLocation,
-  round,
   isMultiplayer,
   hasPlayersGuessed,
   isLeader,
@@ -65,13 +44,19 @@ export default function Game({
   setShowResults,
   isGameOver,
   setIsGameOver,
-  getCurrentGuess,
-  getAllPlayerGuesses,
-  userGuesses,
-  updateGameToEnd,
 }: GameProps) {
   const resize = useResize();
   const { user } = useUserContext();
+  const {
+    game,
+    playerPoints,
+    location,
+    userGuesses,
+    round,
+    setPlayerPoints,
+    getAllPlayerGuesses,
+    getCurrentGuess,
+  } = useGameContext();
 
   useEffect(() => {
     if (!game) return;
@@ -169,14 +154,11 @@ export default function Game({
       <div className="absolute bottom-4 left-4 z-20 w-full max-w-[334px] md:max-w-[500px]">
         {isGameOver ? (
           <>
-            <ScoreBoard
-              isMultiplayer={isMultiplayer}
-              userGuesses={userGuesses}
-              getAllPlayerGuesses={getAllPlayerGuesses}
-            />
+            <ScoreBoard isMultiplayer={isMultiplayer} />
             <Button className="w-full p-0">
               <Link
                 to={isMultiplayer ? "/multiplayer" : "/"}
+                reloadDocument
                 className="w-full px-4 py-2 outline-none"
               >
                 Back to start
@@ -187,22 +169,14 @@ export default function Game({
           <>
             {showResults ? (
               <PointBoard
-                game={game}
-                location={location}
                 cords={cords}
-                round={round}
-                playerPoints={playerPoints}
-                userGuesses={userGuesses}
                 setCords={setCords}
                 setIsGameOver={setIsGameOver}
                 setShowResults={setShowResults}
-                getAllPlayerGuesses={getAllPlayerGuesses}
-                getNewLocation={getNewLocation}
                 isMultiplayer={isMultiplayer}
                 hasPlayersGuessed={hasPlayersGuessed}
                 isLeader={isLeader}
                 isGameOver={isGameOver}
-                updateGameToEnd={updateGameToEnd}
               />
             ) : (
               <>

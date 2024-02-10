@@ -1,10 +1,16 @@
-import supabase from "@/supabase/supabaseConfig";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import useUserContext from "./useUserContext";
-import { LatLng } from "@/pages/MapBuilder";
+import useUserContext from "@/hooks/useUserContext";
 import { getImageUrl } from "@/lib/utils";
+import { LatLng } from "@/pages/MapBuilder";
+import supabase from "@/supabase/supabaseConfig";
+import {
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  createContext,
+  useState,
+} from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export type GameData = {
   id: string;
@@ -23,7 +29,7 @@ export type Location = {
 };
 
 type Props = {
-  id: string;
+  children: ReactNode;
 };
 
 export type UserGuesses = {
@@ -36,7 +42,34 @@ export type UserGuesses = {
   points: number;
 };
 
-export default function useGame({ id }: Props) {
+type GameContextType = {
+  round: number;
+  game: GameData | null;
+  location: Location | null;
+  playerPoints: number;
+  userGuesses: UserGuesses[];
+  setPlayerPoints: Dispatch<SetStateAction<number>>;
+  setRound: Dispatch<SetStateAction<number>>;
+  setUserGuesses: Dispatch<SetStateAction<UserGuesses[]>>;
+  setLocation: Dispatch<SetStateAction<Location | null>>;
+  getGame: () => Promise<void>;
+  getNewLocation: () => Promise<void>;
+  getPrevLocations: () => Promise<void>;
+  getPlayerPoints: () => Promise<void>;
+  getCurrentLocation: (locationId: string) => Promise<void>;
+  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
+  getCurrentGuess: (
+    locationId: string,
+    gameId: string,
+    userId: string,
+  ) => Promise<LatLng | undefined>;
+  updateGameToEnd: () => Promise<void>;
+};
+
+export const GameContext = createContext<GameContextType | null>(null);
+
+export default function GameContextProvider({ children }: Props) {
+  const { id } = useParams() as { id: string };
   const { user } = useUserContext();
   const [game, setGame] = useState<GameData | null>(null);
   const [round, setRound] = useState(0);
@@ -64,10 +97,10 @@ export default function useGame({ id }: Props) {
   };
 
   /*
-  Get all previous locations to -
-  Check how many round player has played
-  Filter out already used locations for selection of new location
-   */
+    Get all previous locations to -
+    Check how many round player has played
+    Filter out already used locations for selection of new location
+     */
   const getPrevLocations = async () => {
     const { data, error } = await supabase
       .from("game_location")
@@ -232,7 +265,7 @@ export default function useGame({ id }: Props) {
     setUserGuesses(guesses);
   };
 
-  const updateGameToEnded = async () => {
+  const updateGameToEnd = async () => {
     const { error } = await supabase
       .from("games")
       .update({ ended_at: new Date().toISOString() })
@@ -244,24 +277,29 @@ export default function useGame({ id }: Props) {
       });
     }
   };
-
-  return {
-    game,
-    round,
-    location,
-    playerPoints,
-    setPlayerPoints,
-    setRound,
-    setUserGuesses,
-    setLocation,
-    getGame,
-    getNewLocation,
-    getCurrentLocation,
-    getPrevLocations,
-    getPlayerPoints,
-    getCurrentGuess,
-    getAllPlayerGuesses,
-    userGuesses,
-    updateGameToEnded,
-  };
+  return (
+    <GameContext.Provider
+      value={{
+        game,
+        round,
+        location,
+        playerPoints,
+        setPlayerPoints,
+        setRound,
+        setUserGuesses,
+        setLocation,
+        getGame,
+        getNewLocation,
+        getCurrentLocation,
+        getPrevLocations,
+        getPlayerPoints,
+        getCurrentGuess,
+        getAllPlayerGuesses,
+        userGuesses,
+        updateGameToEnd,
+      }}
+    >
+      {children}
+    </GameContext.Provider>
+  );
 }

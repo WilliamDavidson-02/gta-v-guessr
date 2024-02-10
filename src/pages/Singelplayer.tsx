@@ -1,26 +1,16 @@
 import Game from "@/components/guesser/Game";
-import useGame from "@/hooks/useGame";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { LatLng } from "./MapBuilder";
+import useGameContext from "@/hooks/useGameContext";
 
 export default function Singleplayer() {
-  const { id } = useParams();
   const {
     game,
-    location,
-    round,
-    playerPoints,
-    userGuesses,
-    setPlayerPoints,
     getGame,
-    getNewLocation,
     getPrevLocations,
     getPlayerPoints,
-    getCurrentGuess,
     getAllPlayerGuesses,
-    updateGameToEnded,
-  } = useGame({ id } as { id: string });
+  } = useGameContext();
   const [cords, setCords] = useState<LatLng>({ lat: 0, lng: 0 });
   const [showResults, setShowResults] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -42,12 +32,6 @@ export default function Singleplayer() {
   return (
     <section className="h-[calc(100vh-96px)]">
       <Game
-        location={location}
-        game={game}
-        playerPoints={playerPoints}
-        setPlayerPoints={setPlayerPoints}
-        getNewLocation={getNewLocation}
-        round={round}
         isMultiplayer={false}
         hasPlayersGuessed={true}
         isLeader={true}
@@ -57,10 +41,6 @@ export default function Singleplayer() {
         setShowResults={setShowResults}
         isGameOver={isGameOver}
         setIsGameOver={setIsGameOver}
-        getCurrentGuess={getCurrentGuess}
-        getAllPlayerGuesses={getAllPlayerGuesses}
-        userGuesses={userGuesses}
-        updateGameToEnd={updateGameToEnded}
       />
     </section>
   );

@@ -6,6 +6,7 @@ import AdminStats from "./pages/AdminStats";
 import MapBuilder from "./pages/MapBuilder";
 import { Toaster } from "@/components/ui/sonner";
 import Layout from "./components/Layout";
+import GameContextProvider from "./context/GameContext";
 
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -24,8 +25,22 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/auth/:form" element={<Auth />} />
             <Route element={<PrivateRoutes />}>
-              <Route path="/singelplayer/:id" element={<Singelplayer />} />
-              <Route path="/multiplayer/:id?" element={<Multiplayer />} />
+              <Route
+                path="/singelplayer/:id"
+                element={
+                  <GameContextProvider>
+                    <Singelplayer />
+                  </GameContextProvider>
+                }
+              />
+              <Route
+                path="/multiplayer/:id?"
+                element={
+                  <GameContextProvider>
+                    <Multiplayer />
+                  </GameContextProvider>
+                }
+              />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route element={<AdminRoute />}>

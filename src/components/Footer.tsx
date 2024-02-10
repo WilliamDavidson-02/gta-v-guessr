@@ -1,4 +1,5 @@
 import GithubIcon from "./GithubIcon";
+import ThemeSelect from "./ThemeSelect";
 
 export default function Footer() {
   return (
@@ -15,12 +16,15 @@ export default function Footer() {
               WilliamDavidson-02
             </a>
           </p>
-          <GithubIcon
-            title="gta-v-guessr"
-            target="_blank"
-            href="https://github.com/WilliamDavidson-02/gta-v-guessr"
-            className="h-7 w-7 rounded p-1 transition-colors duration-300 hover:bg-accent"
-          />
+          <div className="flex items-center gap-2">
+            <GithubIcon
+              title="gta-v-guessr"
+              target="_blank"
+              href="https://github.com/WilliamDavidson-02/gta-v-guessr"
+              className="h-10 w-10 rounded p-2 transition-colors duration-300 hover:bg-accent"
+            />
+            <ThemeSelect />
+          </div>
         </div>
       </div>
     </footer>

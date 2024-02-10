@@ -4,46 +4,40 @@ import { Card, CardContent, CardFooter } from "../ui/card";
 import { MAX_GAME_ROUNDS } from "./Game";
 import { formatDistance } from "@/lib/utils";
 import { LatLng } from "@/pages/MapBuilder";
-import { GameData, Location, UserGuesses } from "@/hooks/useGame";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import useGameContext from "@/hooks/useGameContext";
 
 type Props = {
-  game: GameData | null;
-  location: Location | null;
   cords: LatLng;
-  round: number;
-  playerPoints: number;
   isMultiplayer: boolean;
   hasPlayersGuessed: boolean;
   isLeader: boolean;
   isGameOver: boolean;
-  userGuesses: UserGuesses[];
   setCords: Dispatch<SetStateAction<LatLng>>;
   setIsGameOver: Dispatch<SetStateAction<boolean>>;
   setShowResults: Dispatch<SetStateAction<boolean>>;
-  getAllPlayerGuesses: (locationId?: string) => Promise<void>;
-  getNewLocation: () => Promise<void>;
-  updateGameToEnd: () => Promise<void>;
 };
 
 export default function PointBoard({
-  playerPoints,
   cords,
   setCords,
-  location,
   isMultiplayer,
   hasPlayersGuessed,
   isLeader,
-  game,
-  round,
   setIsGameOver,
   setShowResults,
-  getAllPlayerGuesses,
-  getNewLocation,
-  userGuesses,
   isGameOver,
-  updateGameToEnd,
 }: Props) {
+  const {
+    game,
+    round,
+    playerPoints,
+    location,
+    userGuesses,
+    getNewLocation,
+    getAllPlayerGuesses,
+    updateGameToEnd,
+  } = useGameContext();
   const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
 
   useEffect(() => {
