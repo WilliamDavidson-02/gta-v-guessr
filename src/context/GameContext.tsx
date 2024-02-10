@@ -63,6 +63,13 @@ type GameContextType = {
     gameId: string,
     userId: string,
   ) => Promise<LatLng | undefined>;
+  getPlayersInGame: () => Promise<
+    | {
+        id: string;
+        username: string;
+      }[]
+    | undefined
+  >;
   updateGameToEnd: () => Promise<void>;
 };
 
@@ -277,6 +284,26 @@ export default function GameContextProvider({ children }: Props) {
       });
     }
   };
+
+  const getPlayersInGame = async () => {
+    const { data, error } = await supabase
+      .from("user_game")
+      .select("profiles(id, username)")
+      .eq("game_id", id); // id from useParams, game id
+
+    if (error) {
+      toast.error("Error getting players in game");
+      return;
+    }
+
+    const players = data.map((player: { [key: string]: any }) => ({
+      id: player.profiles.id as string,
+      username: player.profiles.username as string,
+    }));
+
+    return players;
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -295,6 +322,7 @@ export default function GameContextProvider({ children }: Props) {
         getPlayerPoints,
         getCurrentGuess,
         getAllPlayerGuesses,
+        getPlayersInGame,
         userGuesses,
         updateGameToEnd,
       }}

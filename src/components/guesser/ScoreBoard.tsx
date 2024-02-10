@@ -60,9 +60,10 @@ function UserScore({ userGuesses, sum }: ScoreProps) {
 
 export default function ScoreBoard({ isMultiplayer }: Props) {
   const { user } = useUserContext();
-  const { userGuesses, getAllPlayerGuesses } = useGameContext();
+  const { userGuesses, getAllPlayerGuesses, getPlayersInGame } =
+    useGameContext();
   const [usersScores, setUsersScores] = useState<UsersScores[]>([]);
-  const [winner, setWinner] = useState("");
+  const [winner, setWinner] = useState({ id: "", message: "" });
 
   useEffect(() => {
     getAllPlayerGuesses();
@@ -97,30 +98,48 @@ export default function ScoreBoard({ isMultiplayer }: Props) {
         mappedUsers.push(user);
       });
 
-      if (isMultiplayer && mappedUsers.length) {
-        setWinner(() => {
-          const [playerA, playerB] = mappedUsers;
-          const getLastPoints = (guesses: Guesses[]): number => {
-            return guesses[guesses.length - 1].points;
-          };
-
-          const lastA = getLastPoints(playerA.guesses);
-          const lastB = getLastPoints(playerB.guesses);
-
-          if (playerA.sum < playerB.sum || lastA === 0) {
-            return `Winner is ${playerB.username}!`;
-          } else if (playerA.sum > playerB.sum || lastB === 0) {
-            return `Winner is ${playerA.username}!`;
-          }
-          return "Draw!";
-        });
-      }
+      if (isMultiplayer && mappedUsers.length) calcWinner(mappedUsers);
 
       setUsersScores(mappedUsers);
     };
 
     mapUsersScores();
   }, [userGuesses]);
+
+  const calcWinner = async (mappedUsers: UsersScores[]) => {
+    // If playerA gets 0 points first round before playerB as guessed mappedUsers will only contain playerA
+    if (mappedUsers.length < 2) {
+      const players = await getPlayersInGame();
+      const player = players?.find(
+        (player) => player.id !== mappedUsers[0].userId,
+      );
+
+      setWinner({
+        id: mappedUsers[0].userId,
+        message: `Winner is ${player?.username}`,
+      });
+      return;
+    }
+
+    let winner = { id: user!.id, message: "Draw!" };
+    const [playerA, playerB] = mappedUsers;
+    const getLastPoints = (guesses: Guesses[]): number => {
+      return guesses[guesses.length - 1].points;
+    };
+
+    const lastA = getLastPoints(playerA.guesses);
+    const lastB = getLastPoints(playerB.guesses);
+
+    if (playerA.sum < playerB.sum || lastA === 0) {
+      winner.message = `Winner is ${playerB.username}!`;
+      winner.id = playerB.userId;
+    } else if (playerA.sum > playerB.sum || lastB === 0) {
+      winner.message = `Winner is ${playerA.username}!`;
+      winner.id = playerA.userId;
+    }
+
+    setWinner(winner);
+  };
 
   return (
     <Dialog>
@@ -134,7 +153,7 @@ export default function ScoreBoard({ isMultiplayer }: Props) {
           <DialogTitle>Score board</DialogTitle>
         </DialogHeader>
         {isMultiplayer ? (
-          <Tabs defaultValue={user?.id}>
+          <Tabs defaultValue={winner.id}>
             <TabsList className="w-full">
               {usersScores.map((userGuess) => (
                 <TabsTrigger
@@ -155,7 +174,7 @@ export default function ScoreBoard({ isMultiplayer }: Props) {
               </TabsContent>
             ))}
             <div className="mt-4 rounded-md bg-accent py-2 text-center text-xl font-semibold">
-              {winner}
+              {winner.message}
             </div>
           </Tabs>
         ) : (
