@@ -52,7 +52,7 @@ export default function UserContextProvider({
   const getUserProfileData = async (id: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, avatar_url, theme, access_role")
+      .select("username, avatar_url, access_role")
       .eq("id", id);
 
     if (error) {
