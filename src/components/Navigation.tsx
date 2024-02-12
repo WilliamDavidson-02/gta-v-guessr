@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import useUserContext from "@/hooks/useUserContext";
 import {
@@ -15,6 +15,7 @@ import { Skeleton } from "./ui/skeleton";
 
 export default function Navigation() {
   const { user, signOut, isLoading } = useUserContext();
+  const navigate = useNavigate();
 
   return (
     <nav className="flex w-full items-center justify-between py-6">
@@ -42,29 +43,33 @@ export default function Navigation() {
             {user.user_metadata.access_role === "admin" && (
               <>
                 <DropdownMenuSeparator className="bg-border" />
-                <DropdownMenuItem className="cursor-pointer">
-                  <Link className="w-full" to="/admin">
-                    Admin
-                  </Link>
+                <DropdownMenuItem
+                  onClick={() => navigate("/admin")}
+                  className="cursor-pointer"
+                >
+                  Admin
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem className="cursor-pointer">
-              <Link className="flex w-full items-center gap-2" to="/settings">
-                <Settings size={16} />
-                <span>Settings</span>
-              </Link>
+            <DropdownMenuItem
+              onClick={() => navigate("/settings")}
+              className="flex w-full cursor-pointer items-center gap-2"
+            >
+              <Settings size={16} />
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
-            <DropdownMenuItem className="cursor-pointer">
-              <Link className="w-full" to="/">
-                Single player
-              </Link>
+            <DropdownMenuItem
+              onClick={() => navigate("/")}
+              className="cursor-pointer"
+            >
+              Single player
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <Link className="w-full" to="/multiplayer">
-                Multiplayer
-              </Link>
+            <DropdownMenuItem
+              onClick={() => navigate("/multiplayer")}
+              className="cursor-pointer"
+            >
+              Multiplayer
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem onClick={signOut} className="cursor-pointer">
